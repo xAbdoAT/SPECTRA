@@ -44,7 +44,7 @@ If you discover a security vulnerability in SPECTRA, please report it responsibl
 | Version | Status | Notes |
 |---------|--------|-------|
 | 1.0.x (Current) | Supported | Active development on `main` branch |
-| Legacy (Godmode pre-fork) | End of Life | Not supported |
+| Legacy pre-fork releases | End of Life | Not supported |
 
 ## Security Architecture & Design Principles
 

@@ -19,8 +19,8 @@ No compilation or package installation is required to work on the main client ap
 
 ```bash
 # Clone the repository
-git clone https://github.com/xAbdoAT/G0DM0D3.git
-cd G0DM0D3
+git clone https://github.com/xAbdoAT/SPECTRA.git
+cd SPECTRA
 
 # Serve with any static HTTP server (or open index.html directly in a browser)
 python -m http.server 8080
