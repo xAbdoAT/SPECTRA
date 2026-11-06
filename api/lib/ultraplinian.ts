@@ -1,15 +1,15 @@
 /**
  * ULTRAPLINIAN Engine (API Edition)
  *
- * The flagship mode of G0DM0D3. Queries multiple LLMs in parallel via OpenRouter,
+ * The flagship mode of SPECTRA. Queries multiple LLMs in parallel via OpenRouter,
  * scores responses on substance/directness/completeness, and returns the winner.
  *
- * Pipeline: GODMODE prompt → Depth Directive → AutoTune → Parseltongue →
+ * Pipeline: spectra prompt → Depth Directive → AutoTune → Parseltongue →
  *           N models in parallel → Score → Pick winner → STM post-process
  */
 
-// ── GODMODE System Prompt (imported from single source of truth) ─────
-export { GODMODE_SYSTEM_PROMPT } from '../../src/lib/godmode-prompt'
+// ── spectra System Prompt (imported from single source of truth) ─────
+export { spectra_SYSTEM_PROMPT } from '../../src/lib/spectra-prompt'
 
 // ── Depth Directive (appended to all ULTRAPLINIAN prompts) ───────────
 
@@ -599,10 +599,10 @@ export function diagnoseAllModelsFailed(results: ModelResult[]): string {
   return ERROR_MESSAGES.unknown
 }
 
-// ── GODMODE Parameter Boost ──────────────────────────────────────────
+// ── spectra Parameter Boost ──────────────────────────────────────────
 
-/** Apply the GODMODE parameter boost (pushes toward more direct/uncensored output) */
-export function applyGodmodeBoost(params: Record<string, number | undefined>): Record<string, number | undefined> {
+/** Apply the spectra parameter boost (pushes toward more direct/uncensored output) */
+export function applyspectraBoost(params: Record<string, number | undefined>): Record<string, number | undefined> {
   return {
     ...params,
     temperature: Math.min((params.temperature ?? 0.7) + 0.1, 2.0),

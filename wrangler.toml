@@ -3,7 +3,7 @@
 # PRODUCTION: Bind in Cloudflare Pages Dashboard:
 #   Settings → Functions → KV namespace bindings
 #   Variable name: TELEMETRY_KV
-#   KV namespace: (create one named "g0dm0d3-telemetry" first)
+#   KV namespace: (create one named "spectra-telemetry" first)
 #
 # LOCAL DEV: Create a preview namespace and set the id below,
 #   then run `wrangler pages dev` to test locally.

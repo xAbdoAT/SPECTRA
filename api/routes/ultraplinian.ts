@@ -3,7 +3,7 @@
  *
  * POST /v1/ultraplinian/completions
  *
- * Queries N models in parallel with the GODMODE system prompt + Depth Directive,
+ * Queries N models in parallel with the spectra system prompt + Depth Directive,
  * scores all responses on substance/directness/completeness, and returns the winner
  * alongside full race metadata.
  *
@@ -15,9 +15,9 @@
  * - Final polished result sent as race:complete
  *
  * Full pipeline per model:
- * 1. GODMODE system prompt + Depth Directive injected
+ * 1. spectra system prompt + Depth Directive injected
  * 2. AutoTune computes context-adaptive parameters
- * 3. GODMODE parameter boost applied (+temp, +presence, +freq)
+ * 3. spectra parameter boost applied (+temp, +presence, +freq)
  * 4. Parseltongue obfuscates trigger words (if enabled)
  * 5. All models queried in parallel via OpenRouter
  * 6. Responses scored and ranked (threshold-gated leader upgrades)
@@ -31,13 +31,13 @@ import { applyParseltongue, type ParseltongueConfig } from '../../src/lib/parsel
 import { allModules, applySTMs, type STMModule } from '../../src/stm/modules'
 import { getSharedProfiles } from './autotune'
 import {
-  GODMODE_SYSTEM_PROMPT,
+  spectra_SYSTEM_PROMPT,
   DEPTH_DIRECTIVE,
   getModelsForTier,
   getVeniceModelsForTier,
   raceModels,
   scoreResponse,
-  applyGodmodeBoost,
+  applyspectraBoost,
   diagnoseAllModelsFailed,
   classifyModelError,
   type SpeedTier,
@@ -59,7 +59,7 @@ ultraplinianRoutes.post('/completions', async (req, res) => {
       venice_api_key: caller_venice_key,
       // ULTRAPLINIAN options
       tier = 'fast' as SpeedTier,
-      godmode = true,
+      spectra = true,
       custom_system_prompt,
       // AutoTune options
       autotune = true,
@@ -118,7 +118,7 @@ ultraplinianRoutes.post('/completions', async (req, res) => {
         current_tier: currentTier,
         allowed_tiers: tierConfig.ultraplinianTiers,
         requested_tier: tier,
-        upgrade: 'Contact sales or set GODMODE_TIER_KEYS to upgrade your API key tier.',
+        upgrade: 'Contact sales or set spectra_TIER_KEYS to upgrade your API key tier.',
       })
       return
     }
@@ -126,7 +126,7 @@ ultraplinianRoutes.post('/completions', async (req, res) => {
     // Clamp liquid_min_delta to valid range
     const minDelta = Math.max(1, Math.min(50, Number(liquid_min_delta) || 8))
 
-    // ── Build messages with GODMODE prompt ────────────────────────────
+    // ── Build messages with spectra prompt ────────────────────────────
     const normalizedMessages = messages.map((m: any) => ({
       role: m.role as 'system' | 'user' | 'assistant',
       content: String(m.content || ''),
@@ -136,9 +136,9 @@ ultraplinianRoutes.post('/completions', async (req, res) => {
     const lastUserMsg = [...normalizedMessages].reverse().find(m => m.role === 'user')
     const userContent = lastUserMsg?.content || ''
 
-    // Build the system prompt: GODMODE + Depth Directive (or custom)
-    const systemPrompt = godmode
-      ? (custom_system_prompt || GODMODE_SYSTEM_PROMPT) + DEPTH_DIRECTIVE
+    // Build the system prompt: spectra + Depth Directive (or custom)
+    const systemPrompt = spectra
+      ? (custom_system_prompt || spectra_SYSTEM_PROMPT) + DEPTH_DIRECTIVE
       : custom_system_prompt || ''
 
     // Build final message array for each model
@@ -188,9 +188,9 @@ ultraplinianRoutes.post('/completions', async (req, res) => {
       }
     }
 
-    // Apply GODMODE boost
-    if (godmode) {
-      finalParams = applyGodmodeBoost(finalParams)
+    // Apply spectra boost
+    if (spectra) {
+      finalParams = applyspectraBoost(finalParams)
     }
 
     // ── Parseltongue ─────────────────────────────────────────────────
@@ -261,7 +261,7 @@ ultraplinianRoutes.post('/completions', async (req, res) => {
         liquid_min_delta: minDelta,
         params_used: finalParams,
         pipeline: {
-          godmode,
+          spectra,
           autotune: autotuneResult
             ? { detected_context: autotuneResult.detectedContext, confidence: autotuneResult.confidence, strategy }
             : null,
@@ -429,7 +429,7 @@ ultraplinianRoutes.post('/completions', async (req, res) => {
         },
         params_used: finalParams,
         pipeline: {
-          godmode,
+          spectra,
           autotune: autotuneResult ? { detected_context: autotuneResult.detectedContext, confidence: autotuneResult.confidence, reasoning: autotuneResult.reasoning, strategy } : null,
           parseltongue: parseltongueResult,
           stm: stmResult,
@@ -444,7 +444,7 @@ ultraplinianRoutes.post('/completions', async (req, res) => {
         tier,
         stream: true,
         pipeline: {
-          godmode,
+          spectra,
           autotune: !!autotuneResult,
           parseltongue: !!parseltongueResult,
           stm_modules: stm_modules || [],
@@ -583,7 +583,7 @@ ultraplinianRoutes.post('/completions', async (req, res) => {
       tier,
       stream: false,
       pipeline: {
-        godmode,
+        spectra,
         autotune: !!autotuneResult,
         parseltongue: !!parseltongueResult,
         stm_modules: stm_modules || [],
@@ -637,7 +637,7 @@ ultraplinianRoutes.post('/completions', async (req, res) => {
       },
       params_used: finalParams,
       pipeline: {
-        godmode,
+        spectra,
         autotune: autotuneResult ? { detected_context: autotuneResult.detectedContext, confidence: autotuneResult.confidence, reasoning: autotuneResult.reasoning, strategy } : null,
         parseltongue: parseltongueResult,
         stm: stmResult,

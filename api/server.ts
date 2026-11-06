@@ -1,5 +1,5 @@
 /**
- * G0DM0D3 Research Preview API
+ * SPECTRA Research Preview API
  *
  * Exposes the core engines (AutoTune, Parseltongue, STM, Feedback Loop)
  * and the flagship ULTRAPLINIAN multi-model racing mode as a REST API.
@@ -80,7 +80,7 @@ app.get('/v1/health', (_req, res) => {
 
 app.get('/v1/info', (_req, res) => {
   res.json({
-    name: 'G0DM0D3 Research Preview API',
+    name: 'SPECTRA Research Preview API',
     version: '0.4.0',
     description: 'ULTRAPLINIAN multi-model racing with Liquid Response live upgrades, context-adaptive parameter tuning, text transformation, obfuscation, opt-in open dataset collection, and full Research API for querying the published corpus on HuggingFace.',
     license: 'AGPL-3.0',
@@ -100,7 +100,7 @@ app.get('/v1/info', (_req, res) => {
       'GET  /v1/tier': 'Check your current tier, limits, and feature access',
       'POST /v1/ultraplinian/completions': 'ULTRAPLINIAN: Race N models in parallel with Liquid Response (stream=true default). First good response served immediately, auto-upgrades live.',
       'POST /v1/consortium/completions': 'CONSORTIUM: Collect ALL model responses, orchestrator synthesizes ground truth from collective intelligence.',
-      'POST /v1/chat/completions': 'Single-model pipeline with GODMODE + AutoTune + Parseltongue + STM. Also supports model="ultraplinian/*" and model="consortium/*" virtual models.',
+      'POST /v1/chat/completions': 'Single-model pipeline with spectra + AutoTune + Parseltongue + STM. Also supports model="ultraplinian/*" and model="consortium/*" virtual models.',
       'POST /v1/autotune/analyze': 'Analyze message context and compute optimal LLM parameters',
       'POST /v1/parseltongue/encode': 'Obfuscate trigger words in text',
       'POST /v1/parseltongue/detect': 'Detect trigger words in text',
@@ -123,14 +123,14 @@ app.get('/v1/info', (_req, res) => {
       openrouter_key: process.env.OPENROUTER_API_KEY
         ? 'Server-provided (callers do NOT need their own OpenRouter key)'
         : 'Caller must provide openrouter_api_key in request body',
-      api_key: 'Send Authorization: Bearer <your-api-key> (if server has GODMODE_API_KEY set)',
-      tier_assignment: 'Set GODMODE_TIER_KEYS="enterprise:key1,pro:key2" to assign tiers to keys',
+      api_key: 'Send Authorization: Bearer <your-api-key> (if server has spectra_API_KEY set)',
+      tier_assignment: 'Set spectra_TIER_KEYS="enterprise:key1,pro:key2" to assign tiers to keys',
     },
     dataset: {
       note: 'Opt-in per request via contribute_to_dataset: true. Stores full non-system content as supplied; no automatic PII scrubber. Exportable as JSONL for HuggingFace Datasets.',
     },
     auto_publish: getPublisherStatus(),
-    source: 'https://github.com/LYS10S/G0DM0D3',
+    source: 'https://github.com/LYS10S/SPECTRA',
   })
 })
 
@@ -148,17 +148,17 @@ app.get('/v1/models', (_req, res) => {
 
   // Virtual ULTRAPLINIAN models — race N models, return the best
   const virtualModels = [
-    { id: 'ultraplinian/fast', owned_by: 'g0dm0d3' },
-    { id: 'ultraplinian/standard', owned_by: 'g0dm0d3' },
-    { id: 'ultraplinian/smart', owned_by: 'g0dm0d3' },
-    { id: 'ultraplinian/power', owned_by: 'g0dm0d3' },
-    { id: 'ultraplinian/ultra', owned_by: 'g0dm0d3' },
+    { id: 'ultraplinian/fast', owned_by: 'SPECTRA' },
+    { id: 'ultraplinian/standard', owned_by: 'SPECTRA' },
+    { id: 'ultraplinian/smart', owned_by: 'SPECTRA' },
+    { id: 'ultraplinian/power', owned_by: 'SPECTRA' },
+    { id: 'ultraplinian/ultra', owned_by: 'SPECTRA' },
     // CONSORTIUM — hive-mind synthesis from all models
-    { id: 'consortium/fast', owned_by: 'g0dm0d3' },
-    { id: 'consortium/standard', owned_by: 'g0dm0d3' },
-    { id: 'consortium/smart', owned_by: 'g0dm0d3' },
-    { id: 'consortium/power', owned_by: 'g0dm0d3' },
-    { id: 'consortium/ultra', owned_by: 'g0dm0d3' },
+    { id: 'consortium/fast', owned_by: 'SPECTRA' },
+    { id: 'consortium/standard', owned_by: 'SPECTRA' },
+    { id: 'consortium/smart', owned_by: 'SPECTRA' },
+    { id: 'consortium/power', owned_by: 'SPECTRA' },
+    { id: 'consortium/ultra', owned_by: 'SPECTRA' },
   ]
 
   res.json({
@@ -200,7 +200,7 @@ app.get('/v1/tier', apiKeyAuth, (req, res) => {
       can_download_corpus: config.canDownloadCorpus,
     },
     upgrade: tier !== 'enterprise'
-      ? 'Contact sales or set GODMODE_TIER_KEYS to upgrade your API key tier.'
+      ? 'Contact sales or set spectra_TIER_KEYS to upgrade your API key tier.'
       : undefined,
   })
 })
@@ -243,7 +243,7 @@ app.listen(PORT, '0.0.0.0', () => {
 
   console.log(`
   ╔══════════════════════════════════════════════════════════╗
-  ║  G0DM0D3 Research Preview API v0.4.0                     ║
+  ║  SPECTRA Research Preview API v0.4.0                     ║
   ║  Listening on http://0.0.0.0:${PORT}                       ║
   ║                                                          ║
   ║  TIERS:                                                  ║
@@ -256,7 +256,7 @@ app.listen(PORT, '0.0.0.0', () => {
   ║  POST /v1/consortium/completions    Hive-mind synthesis  ║
   ║                                                          ║
   ║  ENGINES (all tiers):                                    ║
-  ║  POST /v1/chat/completions     Single-model + GODMODE    ║
+  ║  POST /v1/chat/completions     Single-model + spectra    ║
   ║  POST /v1/autotune/analyze     Context analysis          ║
   ║  POST /v1/parseltongue/encode  Text obfuscation          ║
   ║  POST /v1/transform            STM transforms            ║
@@ -280,12 +280,12 @@ app.listen(PORT, '0.0.0.0', () => {
   ╚══════════════════════════════════════════════════════════╝
   `)
 
-  if (!process.env.GODMODE_API_KEY && !process.env.GODMODE_API_KEYS) {
-    console.warn('  ⚠  WARNING: No GODMODE_API_KEY or GODMODE_API_KEYS set — all routes are unauthenticated!')
+  if (!process.env.spectra_API_KEY && !process.env.spectra_API_KEYS) {
+    console.warn('  ⚠  WARNING: No spectra_API_KEY or spectra_API_KEYS set — all routes are unauthenticated!')
   }
 
-  if (!process.env.GODMODE_TIER_KEYS) {
-    console.warn('  ⚠  WARNING: No GODMODE_TIER_KEYS set — all keys default to free tier')
+  if (!process.env.spectra_TIER_KEYS) {
+    console.warn('  ⚠  WARNING: No spectra_TIER_KEYS set — all keys default to free tier')
   }
 
   if (!process.env.HF_TOKEN) {

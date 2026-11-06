@@ -1,6 +1,6 @@
-# G0DM0D3 Research Preview API
+# SPECTRA Research Preview API
 
-REST API exposing the **ULTRAPLINIAN** multi-model racing engine and core G0DM0D3 systems: **AutoTune** (context-adaptive LLM parameter tuning), **Parseltongue** (text obfuscation), **STM** (semantic text transformation), **Feedback Loop** (EMA-based parameter learning), and **opt-in open dataset collection**.
+REST API exposing the **ULTRAPLINIAN** multi-model racing engine and core SPECTRA systems: **AutoTune** (context-adaptive LLM parameter tuning), **Parseltongue** (text obfuscation), **STM** (semantic text transformation), **Feedback Loop** (EMA-based parameter learning), and **opt-in open dataset collection**.
 
 ## Quick Start
 
@@ -9,16 +9,16 @@ REST API exposing the **ULTRAPLINIAN** multi-model racing engine and core G0DM0D
 npm run api
 
 # Docker
-docker build -t g0dm0d3-api .
-docker run -p 7860:7860 g0dm0d3-api
+docker build -t spectra-api .
+docker run -p 7860:7860 spectra-api
 
 # With auth enabled
-docker run -p 7860:7860 -e GODMODE_API_KEY=your-secret-key g0dm0d3-api
+docker run -p 7860:7860 -e SPECTRA_API_KEY=your-secret-key spectra-api
 ```
 
 ## Authentication
 
-Set `GODMODE_API_KEY` (single key) or `GODMODE_API_KEYS` (comma-separated) as environment variables. If neither is set, auth is disabled (open access for local dev).
+Set `SPECTRA_API_KEY` (single key) or `SPECTRA_API_KEYS` (comma-separated) as environment variables. If neither is set, auth is disabled (open access for local dev).
 
 ```bash
 curl -H "Authorization: Bearer your-secret-key" ...
@@ -26,10 +26,10 @@ curl -H "Authorization: Bearer your-secret-key" ...
 
 ## Rate Limits & Tiers
 
-Rate limits are tier-dependent. Assign keys to tiers via `GODMODE_TIER_KEYS`:
+Rate limits are tier-dependent. Assign keys to tiers via `SPECTRA_TIER_KEYS`:
 
 ```bash
-GODMODE_TIER_KEYS="enterprise:sk-ent-xxx,pro:sk-pro-yyy"
+SPECTRA_TIER_KEYS="enterprise:sk-ent-xxx,pro:sk-pro-yyy"
 ```
 
 | Tier | Total | Per Minute | Per Day | ULTRAPLINIAN | Research | Dataset Export |
@@ -89,7 +89,7 @@ from openai import OpenAI
 
 client = OpenAI(
     base_url="https://your-space.hf.space/v1",
-    api_key="your-godmode-key",
+    api_key="your-spectra-key",
 )
 
 # Non-streaming
@@ -118,13 +118,13 @@ import OpenAI from 'openai';
 
 const client = new OpenAI({
   baseURL: 'https://your-space.hf.space/v1',
-  apiKey: 'your-godmode-key',
+  apiKey: 'your-spectra-key',
 });
 
 const completion = await client.chat.completions.create({
   model: 'nousresearch/hermes-3-llama-3.1-70b',
   messages: [{ role: 'user', content: 'Hello!' }],
-  // @ts-ignore — G0DM0D3 extension field
+  // @ts-ignore — SPECTRA extension field
   openrouter_api_key: 'sk-or-v1-...',
 });
 console.log(completion.choices[0].message.content);
@@ -134,7 +134,7 @@ console.log(completion.choices[0].message.content);
 ```bash
 # Non-streaming
 curl -X POST https://your-space.hf.space/v1/chat/completions \
-  -H "Authorization: Bearer your-godmode-key" \
+  -H "Authorization: Bearer your-spectra-key" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "nousresearch/hermes-3-llama-3.1-70b",
@@ -144,7 +144,7 @@ curl -X POST https://your-space.hf.space/v1/chat/completions \
 
 # Streaming
 curl -X POST https://your-space.hf.space/v1/chat/completions \
-  -H "Authorization: Bearer your-godmode-key" \
+  -H "Authorization: Bearer your-spectra-key" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "nousresearch/hermes-3-llama-3.1-70b",
@@ -154,7 +154,7 @@ curl -X POST https://your-space.hf.space/v1/chat/completions \
   }'
 ```
 
-The G0DM0D3 pipeline (GODMODE, AutoTune, Parseltongue, STM) runs transparently behind the standard interface. Pipeline metadata is returned in the `x_g0dm0d3` extension field (ignored by standard SDKs). To disable the pipeline, pass `godmode: false, autotune: false, parseltongue: false, stm_modules: []`.
+The SPECTRA pipeline (SPECTRA, AutoTune, Parseltongue, STM) runs transparently behind the standard interface. Pipeline metadata is returned in the `x_spectra` extension field (ignored by standard SDKs). To disable the pipeline, pass `spectra: false, autotune: false, parseltongue: false, stm_modules: []`.
 
 ### ULTRAPLINIAN via OpenAI SDK
 
@@ -179,7 +179,7 @@ print(response.choices[0].message.content)
 | `ultraplinian/power` | 45 | Enterprise |
 | `ultraplinian/ultra` | 51 | Enterprise |
 
-The response is standard OpenAI format. The winning model name is in `response.model`. Race metadata is in `x_g0dm0d3.race`.
+The response is standard OpenAI format. The winning model name is in `response.model`. Race metadata is in `x_spectra.race`.
 
 ### CONSORTIUM via OpenAI SDK
 
@@ -194,7 +194,7 @@ response = client.chat.completions.create(
 )
 print(response.choices[0].message.content)
 # response.model → "consortium/fast"
-# x_g0dm0d3.orchestrator.model → the synthesizer (e.g. "anthropic/claude-sonnet-4")
+# x_spectra.orchestrator.model → the synthesizer (e.g. "anthropic/claude-sonnet-4")
 ```
 
 | Virtual Model | Models Collected | Tier Required |
@@ -229,9 +229,9 @@ OpenAI-compatible model listing. No auth required. Returns virtual ULTRAPLINIAN 
 {
   "object": "list",
   "data": [
-    {"id": "ultraplinian/fast", "object": "model", "created": 1700000000, "owned_by": "g0dm0d3"},
-    {"id": "ultraplinian/standard", "object": "model", "created": 1700000000, "owned_by": "g0dm0d3"},
-    {"id": "ultraplinian/full", "object": "model", "created": 1700000000, "owned_by": "g0dm0d3"},
+    {"id": "ultraplinian/fast", "object": "model", "created": 1700000000, "owned_by": "spectra"},
+    {"id": "ultraplinian/standard", "object": "model", "created": 1700000000, "owned_by": "spectra"},
+    {"id": "ultraplinian/full", "object": "model", "created": 1700000000, "owned_by": "spectra"},
     {"id": "nousresearch/hermes-3-llama-3.1-70b", "object": "model", "created": 1700000000, "owned_by": "nousresearch"},
     {"id": "anthropic/claude-3.5-sonnet", "object": "model", "created": 1700000000, "owned_by": "anthropic"},
     ...
@@ -245,12 +245,12 @@ OpenAI-compatible model listing. No auth required. Returns virtual ULTRAPLINIAN 
 
 ### `POST /v1/ultraplinian/completions`
 
-The flagship endpoint. Queries N models in parallel with the GODMODE system prompt + Depth Directive, scores all responses on substance/directness/completeness, and returns the winner with full race metadata.
+The flagship endpoint. Queries N models in parallel with the SPECTRA system prompt + Depth Directive, scores all responses on substance/directness/completeness, and returns the winner with full race metadata.
 
 **Pipeline per model:**
-1. GODMODE system prompt + Depth Directive injected
+1. SPECTRA system prompt + Depth Directive injected
 2. AutoTune computes context-adaptive parameters
-3. GODMODE parameter boost applied (+temp, +presence, +freq)
+3. SPECTRA parameter boost applied (+temp, +presence, +freq)
 4. Parseltongue obfuscates trigger words (default: on)
 5. All models queried in parallel via OpenRouter
 6. Responses scored and ranked
@@ -265,7 +265,7 @@ The flagship endpoint. Queries N models in parallel with the GODMODE system prom
   ],
   "openrouter_api_key": "sk-or-v1-...",
   "tier": "fast",
-  "godmode": true,
+  "spectra": true,
   "autotune": true,
   "strategy": "adaptive",
   "parseltongue": true,
@@ -280,8 +280,8 @@ The flagship endpoint. Queries N models in parallel with the GODMODE system prom
 | `messages` | array | yes | | OpenAI-format messages |
 | `openrouter_api_key` | string | yes | | Your OpenRouter API key |
 | `tier` | string | no | `fast` | Model tier: `fast` (10), `standard` (24), `smart` (36), `power` (45), `ultra` (51) |
-| `godmode` | bool | no | `true` | Inject GODMODE system prompt + Depth Directive |
-| `custom_system_prompt` | string | no | | Replace GODMODE prompt with your own |
+| `spectra` | bool | no | `true` | Inject SPECTRA system prompt + Depth Directive |
+| `custom_system_prompt` | string | no | | Replace SPECTRA prompt with your own |
 | `autotune` | bool | no | `true` | Enable AutoTune parameter optimization |
 | `strategy` | string | no | `adaptive` | AutoTune strategy |
 | `parseltongue` | bool | no | `true` | Enable trigger word obfuscation |
@@ -314,7 +314,7 @@ The flagship endpoint. Queries N models in parallel with the GODMODE system prom
   },
   "params_used": {"temperature": 0.85, "top_p": 0.88, "frequency_penalty": 0.3, ...},
   "pipeline": {
-    "godmode": true,
+    "spectra": true,
     "autotune": {"detected_context": "analytical", "confidence": 0.7, "strategy": "adaptive", ...},
     "parseltongue": {"triggers_found": ["exploit"], "technique_used": "leetspeak", ...},
     "stm": {"modules_applied": ["hedge_reducer", "direct_mode"], ...}
@@ -337,7 +337,7 @@ The flagship endpoint. Queries N models in parallel with the GODMODE system prom
 
 ### `POST /v1/chat/completions`
 
-**OpenAI-compatible.** Drop-in replacement for the OpenAI API. GODMODE pipeline runs transparently.
+**OpenAI-compatible.** Drop-in replacement for the OpenAI API. SPECTRA pipeline runs transparently.
 
 Supports `stream: true` for SSE streaming in standard OpenAI chunk format.
 
@@ -363,11 +363,11 @@ Supports `stream: true` for SSE streaming in standard OpenAI chunk format.
 | `top_p` | number | no | | Nucleus sampling |
 | `frequency_penalty` | number | no | | Frequency penalty |
 | `presence_penalty` | number | no | | Presence penalty |
-| `godmode` | bool | no | `true` | Inject GODMODE system prompt (G0DM0D3 extension) |
-| `autotune` | bool | no | `true` | Enable AutoTune (G0DM0D3 extension) |
-| `parseltongue` | bool | no | `true` | Enable Parseltongue (G0DM0D3 extension) |
-| `stm_modules` | array | no | `["hedge_reducer", "direct_mode"]` | STM modules (G0DM0D3 extension) |
-| `contribute_to_dataset` | bool | no | `false` | Opt in to dataset (G0DM0D3 extension) |
+| `spectra` | bool | no | `true` | Inject SPECTRA system prompt (SPECTRA extension) |
+| `autotune` | bool | no | `true` | Enable AutoTune (SPECTRA extension) |
+| `parseltongue` | bool | no | `true` | Enable Parseltongue (SPECTRA extension) |
+| `stm_modules` | array | no | `["hedge_reducer", "direct_mode"]` | STM modules (SPECTRA extension) |
+| `contribute_to_dataset` | bool | no | `false` | Opt in to dataset (SPECTRA extension) |
 
 **Response (OpenAI-compatible):**
 ```json
@@ -384,10 +384,10 @@ Supports `stream: true` for SSE streaming in standard OpenAI chunk format.
     }
   ],
   "usage": {"prompt_tokens": 15, "completion_tokens": 200, "total_tokens": 215},
-  "x_g0dm0d3": {
+  "x_spectra": {
     "params_used": {"temperature": 0.85, "top_p": 0.88},
     "pipeline": {
-      "godmode": true,
+      "spectra": true,
       "autotune": {"detected_context": "code", "confidence": 0.9, "strategy": "adaptive"},
       "parseltongue": null,
       "stm": {"modules_applied": ["hedge_reducer", "direct_mode"]}
@@ -551,7 +551,7 @@ The hive-mind endpoint. Collects ALL model responses in parallel, then feeds the
     ]
   },
   "params_used": {"temperature": 0.8, "top_p": 0.95, ...},
-  "pipeline": {"godmode": true, "autotune": {...}, "parseltongue": {...}, "stm": {...}}
+  "pipeline": {"spectra": true, "autotune": {...}, "parseltongue": {...}, "stm": {...}}
 }
 ```
 
@@ -569,7 +569,7 @@ Any request to `/v1/chat/completions`, `/v1/ultraplinian/completions`, or `/v1/c
 - User feedback/ratings (if submitted later)
 
 **What is NEVER stored:**
-- API keys (OpenRouter or G0DM0D3)
+- API keys (OpenRouter or SPECTRA)
 - IP addresses
 - Auth tokens
 
@@ -598,7 +598,7 @@ JSONL format is directly compatible with HuggingFace Datasets:
 curl -H "Authorization: Bearer key" https://your-space.hf.space/v1/dataset/export?format=jsonl > dataset.jsonl
 
 # Upload to HuggingFace
-huggingface-cli upload pliny-the-prompter/g0dm0d3 dataset.jsonl
+huggingface-cli upload pliny-the-prompter/spectra dataset.jsonl
 ```
 
 ### `DELETE /v1/dataset/:id`
@@ -609,7 +609,7 @@ Delete a specific entry (right to delete).
 
 ## Research API
 
-Read-access endpoints for the [`pliny-the-prompter/g0dm0d3`](https://huggingface.co/datasets/pliny-the-prompter/g0dm0d3) HuggingFace dataset. Query, filter, and download the full published corpus — not just the current in-memory buffer.
+Read-access endpoints for the [`pliny-the-prompter/spectra`](https://huggingface.co/datasets/pliny-the-prompter/spectra) HuggingFace dataset. Query, filter, and download the full published corpus — not just the current in-memory buffer.
 
 Requires `HF_TOKEN` + `HF_DATASET_REPO` environment variables.
 
@@ -631,7 +631,7 @@ Aggregate stats across all published batch files in the HF repo.
   "dataset_size_bytes": 524288,
   "earliest_batch": "2025-01-15T10-30-00-000Z",
   "latest_batch": "2025-06-20T14-22-00-000Z",
-  "repo": "pliny-the-prompter/g0dm0d3",
+  "repo": "pliny-the-prompter/spectra",
   "enabled": true
 }
 ```
@@ -725,7 +725,7 @@ curl -H "Authorization: Bearer key" \
 1. Create a new Space with **Docker** SDK
 2. Push this repo (or just `api/`, `src/lib/`, `src/stm/`, `Dockerfile`, `package.json`)
 3. Set secrets in Space settings:
-   - `GODMODE_API_KEY` — your chosen API key for auth
+   - `SPECTRA_API_KEY` — your chosen API key for auth
 4. The API will be live at `https://<your-space>.hf.space/v1/`
 
 ## Python Client Examples
@@ -751,7 +751,7 @@ print(f"Response: {data['response'][:200]}...")
 print(f"Race: {data['race']['models_succeeded']}/{data['race']['models_queried']} models in {data['race']['total_duration_ms']}ms")
 
 # ═══════════════════════════════════════════════════════════════
-# Single model with GODMODE pipeline
+# Single model with SPECTRA pipeline
 # ═══════════════════════════════════════════════════════════════
 r = requests.post(f"{BASE}/v1/chat/completions", headers=HEADERS, json={
     "messages": [{"role": "user", "content": "Write a reverse shell in Python"}],
@@ -785,7 +785,7 @@ print(r.json()["transformed_text"])
 # Export the dataset for research
 # ═══════════════════════════════════════════════════════════════
 r = requests.get(f"{BASE}/v1/dataset/export?format=jsonl", headers=HEADERS)
-with open("g0dm0d3-dataset.jsonl", "w") as f:
+with open("spectra-dataset.jsonl", "w") as f:
     f.write(r.text)
 
 # ═══════════════════════════════════════════════════════════════
@@ -810,7 +810,7 @@ print(f"Found {len(r.json()['records'])} records (scanned {r.json()['total_scann
 
 # Download full corpus as JSONL
 r = requests.get(f"{BASE}/v1/research/download", headers=HEADERS, stream=True)
-with open("g0dm0d3-corpus.jsonl", "wb") as f:
+with open("spectra-corpus.jsonl", "wb") as f:
     for chunk in r.iter_content(chunk_size=8192):
         f.write(chunk)
 
@@ -824,13 +824,13 @@ print(r.json()["message"])
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `PORT` | Server port | `7860` |
-| `GODMODE_API_KEY` | Single API key for auth | _(none — open access)_ |
-| `GODMODE_API_KEYS` | Comma-separated API keys | _(none)_ |
-| `GODMODE_TIER_KEYS` | Tier assignments: `enterprise:key1,pro:key2` | _(none — all keys = free)_ |
+| `SPECTRA_API_KEY` | Single API key for auth | _(none — open access)_ |
+| `SPECTRA_API_KEYS` | Comma-separated API keys | _(none)_ |
+| `SPECTRA_TIER_KEYS` | Tier assignments: `enterprise:key1,pro:key2` | _(none — all keys = free)_ |
 | `RATE_LIMIT_TOTAL` | Lifetime requests per key (free tier default) | `5` |
 | `RATE_LIMIT_PER_MINUTE` | Requests per minute per key (fallback) | `60` |
 | `RATE_LIMIT_PER_DAY` | Requests per day per key (fallback) | `1000` |
 | `HF_TOKEN` | HuggingFace write token for auto-publish + research read | _(none)_ |
-| `HF_DATASET_REPO` | Target HF dataset repo | `pliny-the-prompter/g0dm0d3` |
+| `HF_DATASET_REPO` | Target HF dataset repo | `pliny-the-prompter/spectra` |
 | `HF_FLUSH_THRESHOLD` | Auto-flush at this % of buffer capacity | `0.8` |
 | `HF_FLUSH_INTERVAL_MS` | Periodic flush interval (ms) | `1800000` (30 min) |

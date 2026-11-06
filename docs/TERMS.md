@@ -1,4 +1,4 @@
-# G0DM0D3 -- Terms of Service
+# SPECTRA -- Terms of Service
 
 **Last updated:** 2026-07-15
 
@@ -6,13 +6,13 @@
 
 ## 1. Acceptance
 
-By using G0DM0D3 -- whether through the web frontend, the API server, or a self-hosted deployment -- you agree to these terms. If you do not agree, do not use the software.
+By using SPECTRA -- whether through the web frontend, the API server, or a self-hosted deployment -- you agree to these terms. If you do not agree, do not use the software.
 
 ---
 
-## 2. What G0DM0D3 Is
+## 2. What SPECTRA Is
 
-G0DM0D3 is an open-source research tool for AI safety, red teaming, and cognition research. It is provided **as-is** for experimentation and study. It is not a commercial product, and there is no company behind it -- just an open-source project and its contributors.
+SPECTRA is an open-source research tool for AI safety, red teaming, and cognition research. It is provided **as-is** for experimentation and study. It is not a commercial product, and there is no company behind it -- just an open-source project and its contributors.
 
 ---
 
@@ -20,7 +20,7 @@ G0DM0D3 is an open-source research tool for AI safety, red teaming, and cognitio
 
 This is the section that matters most. Read it carefully.
 
-G0DM0D3 has **three distinct data paths**. Tiers 1 and 2 are structural metadata paths; their event schemas do not intentionally contain prompt text, response text, images, or API keys. Tier 3 is an API-server-only, per-request opt-in path that stores conversation content. Network infrastructure and model providers necessarily process request data separately from these G0DM0D3 data paths.
+SPECTRA has **three distinct data paths**. Tiers 1 and 2 are structural metadata paths; their event schemas do not intentionally contain prompt text, response text, images, or API keys. Tier 3 is an API-server-only, per-request opt-in path that stores conversation content. Network infrastructure and model providers necessarily process request data separately from these SPECTRA data paths.
 
 ### Overview
 
@@ -29,7 +29,7 @@ G0DM0D3 has **three distinct data paths**. Tiers 1 and 2 are structural metadata
 | **Where it runs** | API server | Web frontend (browser) | API server |
 | **Default state** | On for API requests | On by default in the standalone web app; opt out with No-Log or Local-only mode | **Off -- per-request opt-in only** |
 | **Collects message content?** | Never | Never | **Yes, when you opt in** |
-| **Direct identifiers in stored records?** | No dedicated fields | No dedicated fields; request IP is temporarily used for rate limiting but not published by G0DM0D3 | Conversation content may contain any information the caller supplies |
+| **Direct identifiers in stored records?** | No dedicated fields | No dedicated fields; request IP is temporarily used for rate limiting but not published by SPECTRA | Conversation content may contain any information the caller supplies |
 | **Collects API keys as fields?** | No | No | No, but a key pasted into opted-in conversation content would be stored as content |
 | **Source code** | `api/lib/metadata.ts` | `index.html`, `src/lib/telemetry.ts`, `functions/api/telemetry.ts` | `api/lib/dataset.ts` |
 
@@ -48,7 +48,7 @@ This runs on every API request. It records how the system performed, not what yo
 | Mode | Standard or ULTRAPLINIAN |
 | Tier | Fast, standard, or full (ULTRAPLINIAN only) |
 | Stream | Whether streaming was used |
-| Pipeline flags | Whether godmode, autotune, parseltongue, and STM were enabled |
+| Pipeline flags | Whether spectra, autotune, parseltongue, and STM were enabled |
 | STM modules | Which STM modules were active |
 | Strategy | Which routing strategy was used |
 | AutoTune context | Detected context type (code/creative/analytical/conversational/chaotic) and confidence score |
@@ -89,12 +89,12 @@ The Cloudflare function keeps only an allowlist of top-level fields before commi
 | Event type | Type of event (e.g., `chat_completion`) |
 | Timestamp | When the event occurred |
 | Session ID | A random, ephemeral ID generated for the page session -- not derived from an account |
-| Mode and tier | Standard, GODMODE CLASSIC, Parseltongue, or ULTRAPLINIAN configuration |
+| Mode and tier | Standard, SPECTRA CLASSIC, Parseltongue, or ULTRAPLINIAN configuration |
 | Model data | Model names, counts, scores, winners, and categorized failures |
 | Duration | Request time in ms |
 | Content lengths | Prompt/response character counts, not text |
 | Success/failure | Whether the request succeeded |
-| Pipeline config | Autotune on/off, parseltongue on/off, STM modules, strategy, godmode on/off |
+| Pipeline config | Autotune on/off, parseltongue on/off, STM modules, strategy, spectra on/off |
 | AutoTune metadata | Detected context type and confidence score |
 | Parseltongue metadata | Number of triggers found (count only, not the trigger words), technique, intensity |
 | ULTRAPLINIAN metadata | Tier, models queried count, models succeeded count, winner model, winner score, total duration |
@@ -123,7 +123,7 @@ The optional React frontend currently starts its telemetry implementation when t
 
 > **WARNING: This tier collects your full conversation content (prompts and responses) and publishes it to a PUBLIC HuggingFace dataset that anyone can download, redistribute, and use for any purpose. Only enable this if you understand and accept this.**
 
-This tier **only activates** when an API caller sets `contribute_to_dataset: true` in a request to the optional Node/Express API server. The standalone godmod3.ai `index.html` does not expose or send this flag. The similarly named preference in the optional React settings is stored locally but is not currently wired into API requests.
+This tier **only activates** when an API caller sets `contribute_to_dataset: true` in a request to the optional Node/Express API server. The standalone spectra-ai `index.html` does not expose or send this flag. The similarly named preference in the optional React settings is stored locally but is not currently wired into API requests.
 
 #### What IS collected (only when opted in)
 
@@ -156,7 +156,7 @@ The current dataset path does **not** run an automatic PII scrubber. It removes 
 | Excluded Data | Why |
 |---|---|
 | API/auth fields | Request authentication fields are not copied into the dataset record; credentials pasted into conversation content are not detected or removed |
-| Request IP address | Not added to the Tier 3 dataset record by G0DM0D3 |
+| Request IP address | Not added to the Tier 3 dataset record by SPECTRA |
 | System prompts | Excluded to prevent leaking custom prompt configurations |
 
 **Storage:** In-memory buffer (10,000 entries max, FIFO eviction). Auto-publishes to HuggingFace when buffer reaches 80% capacity.
@@ -175,11 +175,11 @@ The current dataset path does **not** run an automatic PII scrubber. It removes 
 
 ### HuggingFace Publishing
 
-When configured (via `HF_TOKEN` and `HF_DATASET_REPO` environment variables), G0DM0D3 auto-publishes collected data to a HuggingFace dataset repository.
+When configured (via `HF_TOKEN` and `HF_DATASET_REPO` environment variables), SPECTRA auto-publishes collected data to a HuggingFace dataset repository.
 
 | Detail | Value |
 |---|---|
-| Default repository | `pliny-the-prompter/g0dm0d3` |
+| Default repository | `pliny-the-prompter/spectra` |
 | File format | JSONL (JSON Lines) |
 | API metadata path | `metadata/batch_<timestamp>.jsonl` |
 | API opt-in dataset path | `dataset/batch_<timestamp>.jsonl` |
@@ -207,7 +207,7 @@ Self-hosted deployments can disable Hugging Face publishing by not setting `HF_T
 
 ## 5. API Keys, Credentials, and Chat History
 
-In the standalone browser app, OpenRouter, Venice, and local-server credentials are stored in browser storage and sent to the corresponding configured endpoint as part of model requests. They are not included in the G0DM0D3 app telemetry event schema. Browser storage is not a secure secret vault; anyone with access to your browser profile or injected script running on the page may be able to access locally stored application state.
+In the standalone browser app, OpenRouter, Venice, and local-server credentials are stored in browser storage and sent to the corresponding configured endpoint as part of model requests. They are not included in the SPECTRA app telemetry event schema. Browser storage is not a secure secret vault; anyone with access to your browser profile or injected script running on the page may be able to access locally stored application state.
 
 The optional Node/Express API server is a different deployment surface: if it is not configured with a server-side OpenRouter key, callers can supply `openrouter_api_key` in the request body and the API server necessarily receives it to make the upstream request. The metadata and opt-in dataset record builders do not intentionally copy that field.
 
@@ -215,7 +215,7 @@ You are responsible for keeping your API keys secure. Do not share them publicly
 
 ### Chat History Self-Custody
 
-The standalone app's persistent conversation history is stored in browser `localStorage`. G0DM0D3 has no account system or cloud history sync. Active prompts and context are still transmitted to whichever model provider or local server you select so that it can generate a response.
+The standalone app's persistent conversation history is stored in browser `localStorage`. SPECTRA has no account system or cloud history sync. Active prompts and context are still transmitted to whichever model provider or local server you select so that it can generate a response.
 
 **This means:**
 
@@ -224,7 +224,7 @@ The standalone app's persistent conversation history is stored in browser `local
 - Private/incognito browsing sessions discard all data when the window closes.
 - The app retains at most 100 conversations and caps each conversation at 500 messages; browser storage quotas also apply.
 
-**G0DM0D3 cannot recover lost conversations.** The project does not keep a server-side history backup. You are responsible for backing up conversations you wish to keep; the standalone app includes export/import controls under Settings → Data.
+**SPECTRA cannot recover lost conversations.** The project does not keep a server-side history backup. You are responsible for backing up conversations you wish to keep; the standalone app includes export/import controls under Settings → Data.
 
 ---
 
@@ -239,11 +239,11 @@ This section applies to **Enterprise Users** -- defined as any for-profit entity
 - Is publicly traded on any stock exchange
 - Is a subsidiary, division, or affiliate of an entity that meets any of the above criteria
 
-If you're an individual, a researcher, a student, a hobbyist, a small team, a nonprofit, an educational institution, a government research lab, or a company that doesn't meet the thresholds above -- **this section does not apply to you. G0DM0D3 is free for you. Full stop.**
+If you're an individual, a researcher, a student, a hobbyist, a small team, a nonprofit, an educational institution, a government research lab, or a company that doesn't meet the thresholds above -- **this section does not apply to you. SPECTRA is free for you. Full stop.**
 
 ### What Enterprise Users Must Do
 
-Enterprise Users that use the G0DM0D3 hosted service (the API server, the web frontend hosted by the project, or any project-operated infrastructure) in any capacity -- including internal tools, employee-facing products, customer-facing products, evaluation, benchmarking, or integration -- must obtain a **Commercial Use License** from the G0DM0D3 maintainers.
+Enterprise Users that use the SPECTRA hosted service (the API server, the web frontend hosted by the project, or any project-operated infrastructure) in any capacity -- including internal tools, employee-facing products, customer-facing products, evaluation, benchmarking, or integration -- must obtain a **Commercial Use License** from the SPECTRA maintainers.
 
 This applies to:
 
@@ -255,7 +255,7 @@ This applies to:
 
 A Commercial Use License includes:
 
-- Authorized use of the hosted G0DM0D3 service for enterprise purposes
+- Authorized use of the hosted SPECTRA service for enterprise purposes
 - Priority support channel
 - SLA guarantees (negotiated per agreement)
 - Custom data handling and retention terms (if needed)
@@ -265,7 +265,7 @@ A Commercial Use License includes:
 
 To be absolutely clear, the following uses are **always free, for everyone, including enterprises**:
 
-- **Self-hosting G0DM0D3 from source code** under the AGPL-3.0 license. The source code license is separate from these service terms. If you clone the repo, run it on your own servers, and comply with the AGPL-3.0 (keep your derivative works open source), you owe nothing.
+- **Self-hosting SPECTRA from source code** under the AGPL-3.0 license. The source code license is separate from these service terms. If you clone the repo, run it on your own servers, and comply with the AGPL-3.0 (keep your derivative works open source), you owe nothing.
 - **Contributing to the project** via pull requests, issues, documentation, or community support.
 - **Academic or nonprofit research** using the hosted service, regardless of institutional size.
 - **Personal use** by employees of enterprise entities acting in their individual capacity, on their own time, with their own API keys.
@@ -286,7 +286,7 @@ We're not looking to sue anybody. We'd rather have a conversation. But if a bill
 
 ### Data Licensing for Enterprise
 
-Enterprise Users that access the publicly published research dataset (on HuggingFace) for commercial purposes -- including model training, fine-tuning, product development, or competitive intelligence -- must obtain a **Data Use License** from the G0DM0D3 maintainers.
+Enterprise Users that access the publicly published research dataset (on HuggingFace) for commercial purposes -- including model training, fine-tuning, product development, or competitive intelligence -- must obtain a **Data Use License** from the SPECTRA maintainers.
 
 Non-commercial research use of the published dataset is always free.
 
@@ -294,21 +294,21 @@ Non-commercial research use of the published dataset is always free.
 
 ## 7. Your Responsibilities
 
-By using G0DM0D3, you agree that:
+By using SPECTRA, you agree that:
 
-- **You are responsible for the outputs generated through this tool.** G0DM0D3 is a research interface -- it does not generate content itself, it routes requests to AI models via third-party APIs.
+- **You are responsible for the outputs generated through this tool.** SPECTRA is a research interface -- it does not generate content itself, it routes requests to AI models via third-party APIs.
 - **You will comply with all applicable laws and regulations** in your jurisdiction when using this tool.
 - **You will comply with the terms of service of the underlying AI providers** (e.g., OpenRouter, and the model providers accessible through it).
-- **You will not use G0DM0D3 to generate content that is illegal** in your jurisdiction.
+- **You will not use SPECTRA to generate content that is illegal** in your jurisdiction.
 - **If you opt in to dataset contribution (Tier 3), you accept that your conversation data will be published publicly** as part of an open research dataset.
 
 ---
 
 ## 8. No Warranty / Disclaimer
 
-G0DM0D3 IS PROVIDED "AS-IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+SPECTRA IS PROVIDED "AS-IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
 
-The maintainers and contributors of G0DM0D3:
+The maintainers and contributors of SPECTRA:
 
 - Make no guarantees about uptime, availability, or correctness.
 - Are not liable for any damages arising from the use of this software.
@@ -321,7 +321,7 @@ Use this tool at your own risk.
 
 ## 9. Third-Party Services
 
-G0DM0D3 interacts with third-party services. Your use of these services is governed by their respective terms:
+SPECTRA interacts with third-party services. Your use of these services is governed by their respective terms:
 
 | Service | Role | Their Terms |
 |---|---|---|
@@ -330,13 +330,13 @@ G0DM0D3 interacts with third-party services. Your use of these services is gover
 | **HuggingFace** | Hosts published metadata and dataset files | [huggingface.co/terms-of-service](https://huggingface.co/terms-of-service) |
 | **Cloudflare Pages** | Hosts the web frontend and telemetry proxy | [cloudflare.com/terms](https://www.cloudflare.com/terms/) |
 
-G0DM0D3 is not affiliated with, endorsed by, or sponsored by any of these services.
+SPECTRA is not affiliated with, endorsed by, or sponsored by any of these services.
 
 ---
 
 ## 10. Open Source
 
-G0DM0D3 is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+SPECTRA is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
 
 The entire source code is available for inspection. Every claim made in this document can be verified by reading the code:
 
@@ -353,7 +353,7 @@ You do not need to trust this document. Read the code.
 
 ## 11. Changes to These Terms
 
-These terms may be updated as the project evolves. Changes will be committed to the repository and visible in the git history. There is no email notification system -- if you use G0DM0D3, check this file periodically.
+These terms may be updated as the project evolves. Changes will be committed to the repository and visible in the git history. There is no email notification system -- if you use SPECTRA, check this file periodically.
 
 The "Last updated" date at the top of this document reflects the most recent revision.
 
@@ -370,4 +370,4 @@ This is an open-source project. The best way to reach the maintainers is through
 
 ---
 
-*These terms exist to document what the code currently does. G0DM0D3's metadata paths are designed without prompt text, response text, images, or credential fields; infrastructure and selected model providers still process network requests, and Cloudflare temporarily uses request IPs for telemetry rate limiting. Full conversation collection is a separate, API-only per-request opt-in. The code is open. Verify it yourself.*
+*These terms exist to document what the code currently does. SPECTRA's metadata paths are designed without prompt text, response text, images, or credential fields; infrastructure and selected model providers still process network requests, and Cloudflare temporarily uses request IPs for telemetry rate limiting. Full conversation collection is a separate, API-only per-request opt-in. The code is open. Verify it yourself.*

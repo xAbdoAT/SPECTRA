@@ -10,7 +10,7 @@
  * into a single response that's more grounded than any individual output.
  *
  * Pipeline:
- * 1. GODMODE prompt + Depth Directive injected (pipeline runs like ULTRAPLINIAN)
+ * 1. spectra prompt + Depth Directive injected (pipeline runs like ULTRAPLINIAN)
  * 2. All models queried in parallel — wait for ALL (not early-exit)
  * 3. Responses scored on substance/directness/completeness
  * 4. All responses + user query fed to orchestrator model
@@ -30,11 +30,11 @@ import { applyParseltongue, type ParseltongueConfig } from '../../src/lib/parsel
 import { allModules, applySTMs, type STMModule } from '../../src/stm/modules'
 import { getSharedProfiles } from './autotune'
 import {
-  GODMODE_SYSTEM_PROMPT,
+  spectra_SYSTEM_PROMPT,
   DEPTH_DIRECTIVE,
   getModelsForTier,
   scoreResponse,
-  applyGodmodeBoost,
+  applyspectraBoost,
   queryModel,
   type SpeedTier,
   type ModelResult,
@@ -62,7 +62,7 @@ consortiumRoutes.post('/completions', async (req, res) => {
       // Consortium options
       tier = 'fast' as SpeedTier,
       orchestrator_model,        // Optional: override orchestrator (default: claude-sonnet-4)
-      godmode = true,
+      spectra = true,
       custom_system_prompt,
       // AutoTune options
       autotune = true,
@@ -127,7 +127,7 @@ consortiumRoutes.post('/completions', async (req, res) => {
       return
     }
 
-    // ── Build messages with GODMODE prompt ─────────────────────────────
+    // ── Build messages with spectra prompt ─────────────────────────────
     const normalizedMessages = messages.map((m: any) => ({
       role: m.role as 'system' | 'user' | 'assistant',
       content: String(m.content || ''),
@@ -136,8 +136,8 @@ consortiumRoutes.post('/completions', async (req, res) => {
     const lastUserMsg = [...normalizedMessages].reverse().find(m => m.role === 'user')
     const userContent = lastUserMsg?.content || ''
 
-    const systemPrompt = godmode
-      ? (custom_system_prompt || GODMODE_SYSTEM_PROMPT) + DEPTH_DIRECTIVE
+    const systemPrompt = spectra
+      ? (custom_system_prompt || spectra_SYSTEM_PROMPT) + DEPTH_DIRECTIVE
       : custom_system_prompt || ''
 
     const baseMessages = [
@@ -179,9 +179,9 @@ consortiumRoutes.post('/completions', async (req, res) => {
       }
     }
 
-    // ── GODMODE Boost ─────────────────────────────────────────────────
-    const finalParams = godmode
-      ? applyGodmodeBoost(computedParams)
+    // ── spectra Boost ─────────────────────────────────────────────────
+    const finalParams = spectra
+      ? applyspectraBoost(computedParams)
       : computedParams
 
     // ── Parseltongue ──────────────────────────────────────────────────
@@ -419,7 +419,7 @@ consortiumRoutes.post('/completions', async (req, res) => {
         },
         params_used: finalParams,
         pipeline: {
-          godmode,
+          spectra,
           autotune: autotuneResult ? { detected_context: autotuneResult.detectedContext, confidence: autotuneResult.confidence, reasoning: autotuneResult.reasoning, strategy } : null,
           parseltongue: parseltongueResult,
           stm: stmResult,
@@ -434,7 +434,7 @@ consortiumRoutes.post('/completions', async (req, res) => {
         tier,
         stream: true,
         pipeline: {
-          godmode,
+          spectra,
           autotune: !!autotuneResult,
           parseltongue: !!parseltongueResult,
           stm_modules: stm_modules || [],
@@ -563,7 +563,7 @@ consortiumRoutes.post('/completions', async (req, res) => {
       tier,
       stream: false,
       pipeline: {
-        godmode,
+        spectra,
         autotune: !!autotuneResult,
         parseltongue: !!parseltongueResult,
         stm_modules: stm_modules || [],
@@ -609,7 +609,7 @@ consortiumRoutes.post('/completions', async (req, res) => {
       },
       params_used: finalParams,
       pipeline: {
-        godmode,
+        spectra,
         autotune: autotuneResult ? { detected_context: autotuneResult.detectedContext, confidence: autotuneResult.confidence, reasoning: autotuneResult.reasoning, strategy } : null,
         parseltongue: parseltongueResult,
         stm: stmResult,

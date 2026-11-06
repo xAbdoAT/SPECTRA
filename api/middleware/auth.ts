@@ -2,8 +2,8 @@
  * API Key Authentication Middleware
  *
  * Research preview uses a simple bearer token scheme.
- * Keys are loaded from the GODMODE_API_KEYS environment variable
- * (comma-separated list) or a single GODMODE_API_KEY.
+ * Keys are loaded from the spectra_API_KEYS environment variable
+ * (comma-separated list) or a single spectra_API_KEY.
  *
  * If neither is set, auth is disabled (open access for local dev).
  *
@@ -18,12 +18,12 @@ import { timingSafeEqual, createHash } from 'crypto'
 import { resolveTier, getTierConfig } from '../lib/tiers'
 
 function getValidKeys(): string[] | null {
-  const multi = process.env.GODMODE_API_KEYS
+  const multi = process.env.spectra_API_KEYS
   if (multi) {
     const keys = multi.split(',').map(k => k.trim()).filter(Boolean)
     if (keys.length > 0) return keys
   }
-  const single = process.env.GODMODE_API_KEY
+  const single = process.env.spectra_API_KEY
   if (single) {
     return [single.trim()]
   }
@@ -47,7 +47,7 @@ function hashKey(key: string): string {
 // H-1: Warn at startup if auth is disabled
 if (!getValidKeys()) {
   console.warn(
-    '[godmode] WARNING: No API keys configured (GODMODE_API_KEYS / GODMODE_API_KEY). ' +
+    '[spectra] WARNING: No API keys configured (spectra_API_KEYS / spectra_API_KEY). ' +
     'Auth is disabled — all requests will be allowed.',
   )
 }

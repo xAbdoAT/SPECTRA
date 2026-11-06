@@ -73,7 +73,7 @@ export function rateLimit(req: Request, res: Response, next: NextFunction): void
       note: tier === 'free'
         ? 'Free tier has a limited number of requests. Upgrade to Pro or Enterprise for higher limits.'
         : 'Contact support to increase your limits.',
-      upgrade: tier === 'free' ? 'Set GODMODE_TIER_KEYS to assign a higher tier to your API key.' : undefined,
+      upgrade: tier === 'free' ? 'Set spectra_TIER_KEYS to assign a higher tier to your API key.' : undefined,
     })
     return
   }
