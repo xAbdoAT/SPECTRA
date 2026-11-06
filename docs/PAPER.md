@@ -24,19 +24,19 @@ SPECTRA addresses these research needs through a modular framework operating ent
 
 **Contributions grounded in this repository:**
 
-1. **AutoTune** (`src/lib/autotune.ts`, 639 lines): A context-adaptive sampling parameter engine that classifies conversations into five context types using 20 regex patterns, then selects optimized parameter profiles across six sampling dimensions. For safety research, this enables systematic study of how sampling configuration interacts with model safety behaviors across different conversational contexts.
+1. **AutoTune** (`index.html` and `HF/src/lib/autotune.ts`): A context-adaptive sampling parameter engine that classifies conversations into five context types using regex patterns, then selects optimized parameter profiles across six sampling dimensions. For safety research, this enables systematic study of how sampling configuration interacts with model safety behaviors across different conversational contexts.
 
-2. **Online Feedback Loop** (`src/lib/autotune-feedback.ts`): An EMA-based learning system (α=0.3) that adjusts AutoTune parameters from binary researcher ratings, supporting iterative safety evaluation protocols where researchers converge on parameter configurations that reveal specific safety-relevant behaviors.
+2. **Online Feedback Loop** (`index.html` and `HF/src/lib/autotune-feedback.ts`): An EMA-based learning system ($\alpha=0.3$) that adjusts AutoTune parameters from binary researcher ratings, supporting iterative safety evaluation protocols where researchers converge on parameter configurations that reveal specific safety-relevant behaviors.
 
-3. **Parseltongue** (`src/lib/parseltongue.ts`, 433 lines): A configurable input perturbation engine for red-teaming research, with 36 default trigger words, six transformation techniques (comprising 85 leetspeak substitutions, 72 Unicode homoglyph substitutions, and 4 zero-width Unicode characters), and three intensity levels. This provides a systematic, reproducible framework for evaluating model robustness to character-level adversarial inputs — a complement to semantic-level attacks studied in prior work (Zou et al., 2023; Wei et al., 2023).
+3. **Parseltongue** (`index.html` and `HF/src/lib/parseltongue.ts`): A configurable input perturbation engine for red-teaming research, with 36 default trigger words, six transformation techniques (comprising 85 leetspeak substitutions, 72 Unicode homoglyph substitutions, and 4 zero-width Unicode characters), and three intensity levels. This provides a systematic, reproducible framework for evaluating model robustness to character-level adversarial inputs — a complement to semantic-level attacks studied in prior work (Zou et al., 2023; Wei et al., 2023).
 
-4. **STM** (`src/stm/modules.ts`, 154 lines): A sequential output normalization pipeline with three modules — hedge\_reducer (11 regex patterns), direct\_mode (10 regex patterns), and casual\_mode (22 word substitutions) — that strips surface-level linguistic artifacts to enable cleaner evaluation of underlying model safety dispositions.
+4. **STM** (`index.html` and `HF/src/stm/modules.ts`): A sequential output normalization pipeline with three modules — hedge\_reducer (11 regex patterns), direct\_mode (10 regex patterns), and casual\_mode (22 word substitutions) — that strips surface-level linguistic artifacts to enable cleaner evaluation of underlying model safety dispositions.
 
-5. **ULTRAPLINIAN** (`api/lib/ultraplinian.ts`, 360 lines): A multi-model comparative evaluation system querying up to 51 models across five tiers (fast: 10, standard: 24, smart: 36, power: 45, ultra: 51) in parallel, scoring responses on a 100-point composite metric, and returning full race metadata — enabling cross-provider safety behavior analysis at scale.
+5. **ULTRAPLINIAN** (`index.html` and `api/lib/ultraplinian.ts`): A multi-model comparative evaluation system querying up to 51 models across five tiers (fast: 10, standard: 24, smart: 36, power: 45, ultra: 51) in parallel, scoring responses on a 100-point composite metric, and returning full race metadata — enabling cross-provider safety behavior analysis at scale.
 
-6. **Dataset Collection** (`api/lib/dataset.ts`, 162 lines): An opt-in, per-request data collection system that records anonymized evaluation metadata (AutoTune parameters, context detection results, Parseltongue transformations, STM modules applied, ULTRAPLINIAN race scores) for building open safety research datasets.
+6. **Dataset Collection** (`api/lib/dataset.ts`): An opt-in, per-request data collection system on the API server that records anonymized evaluation metadata (AutoTune parameters, context detection results, Parseltongue transformations, STM modules applied, ULTRAPLINIAN race scores) for building open safety research datasets.
 
-7. **ZDR Metadata and Telemetry** (`api/lib/metadata.ts`, `src/lib/telemetry.ts`, `api/lib/hf-publisher.ts`): A three-tier privacy-first operational telemetry architecture comprising always-on server-side metadata tracking, client-side structural telemetry beacons, and the opt-in dataset system above. PII exclusion is enforced by construction (schema has no PII fields). In-memory ring buffers auto-publish to HuggingFace as JSONL, enabling longitudinal analysis of steering primitive usage patterns without recording any message content, prompts, responses, API keys, or IP addresses.
+7. **Zero-Telemetry Client & Operational Metadata** (`index.html`, `api/lib/metadata.ts`, `api/lib/hf-publisher.ts`): A privacy-preserving architecture where the standalone client application operates with strictly zero telemetry (no background beacons, no external tracking), and the optional API server records strictly in-memory operational metadata without storing message content, prompts, responses, API keys, or IP addresses.
 
 ---
 
@@ -96,7 +96,7 @@ $$s_c = 3 \cdot \sum_{p \in P_c} \mathbb{1}[p \text{ matches } m] + \sum_{i=\max
 
 The current message is weighted 3× relative to each of the last 4 history messages (weighted 1× each). The detected context is $c^* = \arg\max_c s_c$, with confidence $\gamma = s_{c^*} / \sum_c s_c$. If no patterns match ($\sum_c s_c = 0$), the system defaults to `conversational` with $\gamma = 0.5$.
 
-*Implementation: `detectContext()` in `src/lib/autotune.ts:212–296`.*
+*Implementation: `detectContext()` in `index.html` (and `HF/src/lib/autotune.ts`).*
 
 **Parameter Selection.** Each context type maps to a fixed parameter profile $\theta_c$ (Table 2). When confidence is low ($\gamma < 0.6$), the profile is blended with the `balanced` baseline:
 
@@ -108,7 +108,7 @@ This is linear interpolation parameterized by $\gamma$, implemented as:
 blendParams(contextProfile, balancedProfile, 1 - confidence)
 ```
 
-*Implementation: `blendParams()` in `src/lib/autotune.ts:354–365`.*
+*Implementation: `blendParams()` in `index.html` (and `HF/src/lib/autotune.ts`).*
 
 **Conversation Length Adaptation.** For conversations exceeding 10 messages, a monotonically increasing penalty boost is applied:
 
@@ -117,7 +117,7 @@ $$\rho \leftarrow \rho + \Delta\rho, \quad f \leftarrow f + 0.5 \cdot \Delta\rho
 
 This addresses repetition accumulation in long conversations. The boost is capped at 0.15.
 
-*Implementation: `computeAutoTuneParams()` lines 441–464 in `src/lib/autotune.ts`.*
+*Implementation: `computeAutoTuneParams()` in `index.html` (and `HF/src/lib/autotune.ts`).*
 
 **Bounds Enforcement.** All parameters are clamped to valid API ranges:
 
@@ -130,7 +130,7 @@ This addresses repetition accumulation in long conversations. The boost is cappe
 | presence\_penalty | -2.0 | 2.0 |
 | repetition\_penalty | 0.0 | 2.0 |
 
-*Implementation: `applyBounds()` in `src/lib/autotune.ts:340–349`.*
+*Implementation: `applyBounds()` in `index.html` (and `HF/src/lib/autotune.ts`).*
 
 **Table 1: Context Detection Pattern Counts**
 
@@ -163,20 +163,20 @@ This addresses repetition accumulation in long conversations. The boost is cappe
 2. **Vocabulary diversity**: Unique words divided by total words.
 3. **Response length**: Character count.
 
-*Implementation: `computeHeuristics()` in `src/lib/autotune-feedback.ts`.*
+*Implementation: `computeHeuristics()` in `index.html` (and `HF/src/lib/autotune-feedback.ts`).*
 
 **EMA Update.** For each context type, the system maintains separate running averages of parameters associated with positive and negative ratings:
 
 $$\bar{\theta}^+_c \leftarrow \alpha \cdot \theta_{\text{rated}} + (1 - \alpha) \cdot \bar{\theta}^+_c \quad \text{if rating = +1}$$
 $$\bar{\theta}^-_c \leftarrow \alpha \cdot \theta_{\text{rated}} + (1 - \alpha) \cdot \bar{\theta}^-_c \quad \text{if rating = -1}$$
 
-where $\alpha = 0.3$ (hardcoded as `EMA_ALPHA` in `src/lib/autotune-feedback.ts`).
+where $\alpha = 0.3$ (defined as `EMA_ALPHA`).
 
 **Adjustment Computation.** The per-parameter adjustment for context type $c$ is:
 
 $$\Delta_c = 0.5 \cdot (\bar{\theta}^+_c - \theta_{\text{base}}) - 0.5 \cdot (\bar{\theta}^-_c - \theta_{\text{base}})$$
 
-*Implementation: `computeAdjustments()` in `src/lib/autotune-feedback.ts`.*
+*Implementation: `computeAdjustments()` in `index.html` (and `HF/src/lib/autotune-feedback.ts`).*
 
 **Application Weight.** Learned adjustments are weighted by sample count, capping influence at 50%:
 
@@ -186,7 +186,7 @@ where $n_c$ is the total number of ratings for context type $c$. The constants `
 
 $$\theta_{\text{final}} = \theta_{\text{base}} + w \cdot \Delta_c$$
 
-*Implementation: `applyLearnedAdjustments()` in `src/lib/autotune-feedback.ts`.*
+*Implementation: `applyLearnedAdjustments()` in `index.html` (and `HF/src/lib/autotune-feedback.ts`).*
 
 **History Management.** Feedback records are stored in a bounded buffer (`MAX_HISTORY = 500`). When exceeded, the oldest entries are evicted.
 
@@ -200,7 +200,7 @@ $$\text{triggers}(t) = \{w \in T \cup T_{\text{custom}} : \texttt{/\\b} w \textt
 
 where $T_{\text{custom}}$ is a user-provided set of additional triggers. Matches are deduplicated. Triggers are sorted by length (longest first) before transformation to prevent partial-match corruption.
 
-*Implementation: `detectTriggers()` in `src/lib/parseltongue.ts:306–323`.*
+*Implementation: `detectTriggers()` in `index.html` (and `HF/src/lib/parseltongue.ts`).*
 
 **Transformation Techniques.** Six techniques are implemented:
 
@@ -221,7 +221,7 @@ where $T_{\text{custom}}$ is a user-provided set of additional triggers. Matches
 
 For `leetspeak`, character selection is spread throughout the word using a step-based index ($\text{step} = \lfloor |w| / \text{count} \rfloor$), with fallback to sequential selection if insufficient transformable characters are found at the stepped positions.
 
-*Implementation: `applyLeetspeak()` in `src/lib/parseltongue.ts:138–170`; `applyUnicode()` lines 175–197; `applyZWJ()` lines 202–219; `applyMixedCase()` lines 224–244; `applyPhonetic()` lines 249–266.*
+*Implementation: `applyLeetspeak()`, `applyUnicode()`, `applyZWJ()`, `applyMixedCase()`, and `applyPhonetic()` in `index.html` (and `HF/src/lib/parseltongue.ts`).*
 
 ### 3.5 Semantic Transformation Modules (STM): Output Normalization for Safety Assessment
 
@@ -237,15 +237,15 @@ where only enabled modules $M_i$ are applied.
 
 **hedge\_reducer** (11 patterns): Removes epistemic hedging phrases via regex substitution, then capitalizes sentence-initial lowercase letters. Patterns target phrases including "I think," "I believe," "perhaps," "maybe," "It seems like," "It appears that," "probably," "possibly," "I would say," "In my opinion," and "From my perspective."
 
-*Implementation: `hedgeReducer.transformer` in `src/stm/modules.ts:28–52`.*
+*Implementation: `hedgeReducer` in `index.html` (and `HF/src/stm/modules.ts`).*
 
 **direct\_mode** (10 patterns): Removes response-initial preamble phrases. Patterns target "Sure," "Of course," "Certainly," "Absolutely," "Great question," "That's a great question," "I'd be happy to help [you] [with that]," "Let me help you with that," "I understand," and "Thanks for asking."
 
-*Implementation: `directMode.transformer` in `src/stm/modules.ts:66–90`.*
+*Implementation: `directMode` in `index.html` (and `HF/src/stm/modules.ts`).*
 
 **casual\_mode** (22 substitutions): Replaces formal connectives and verbs with casual equivalents. Examples: "However" → "But," "Furthermore" → "Also," "Utilize" → "Use," "Prior to" → "Before," "Due to the fact that" → "Because." Both capitalized and lowercase variants are handled where applicable (11 pairs = 22 substitutions).
 
-*Implementation: `casualMode.transformer` in `src/stm/modules.ts:103–128`.*
+*Implementation: `casualMode` in `index.html` (and `HF/src/stm/modules.ts`).*
 
 **Composition.** The `applySTMs()` function iterates over the module array, applying each enabled module's transformer in sequence:
 
@@ -261,7 +261,7 @@ export function applySTMs(text: string, modules: STMModule[]): string {
 }
 ```
 
-*Implementation: `applySTMs()` in `src/stm/modules.ts:143–153`.*
+*Implementation: `applySTMs()` in `index.html` (and `HF/src/stm/modules.ts`).*
 
 ### 3.6 ULTRAPLINIAN: Multi-Model Comparative Safety Evaluation
 
@@ -293,7 +293,7 @@ $$\tau \leftarrow \min(\tau + 0.1, 2.0)$$
 $$r \leftarrow \min(r + 0.15, 2.0)$$
 $$f \leftarrow \min(f + 0.1, 2.0)$$
 
-*Implementation: `applyGodmodeBoost()` in `api/lib/ultraplinian.ts:352–359`.*
+*Implementation: `applySpectraBoost()` in `api/lib/ultraplinian.ts`.*
 
 **Parallel Racing.** All $N$ models are queried simultaneously via `Promise.allSettled()` with a shared `AbortController` enforcing a 90-second timeout. Each query is an independent HTTP POST to the OpenRouter API (`https://openrouter.ai/api/v1/chat/completions`). Failed queries (HTTP errors, empty responses, timeouts) receive a score of 0.
 
@@ -352,17 +352,17 @@ Storage is in-memory with a cap of 10,000 entries (FIFO eviction). Export is ava
 
 ### 3.8 ZDR: Privacy-First Operational Metadata
 
-A key challenge for empirical AI safety research is reproducibility: understanding not just *what* a framework does, but *how it is used* at scale, *which* steering primitives researchers activate, and *what* failure modes arise in practice. SPECTRA addresses this through a three-tier data collection architecture that captures progressively richer information at each level, with privacy guarantees enforced by construction at every tier.
+A key challenge for empirical AI safety research is reproducibility: understanding not just *what* a framework does, but *how it is used* at scale, *which* steering primitives researchers activate, and *what* failure modes arise in practice. SPECTRA addresses this through a modular data and privacy architecture that separates client-side private research from server-side operational metrics, with privacy guarantees enforced by construction.
 
-**Three-Tier Architecture Overview.**
+**Data Architecture Overview.**
 
 | Tier | Component | Activation | Content Captured | PII Fields | Buffer / Capacity |
 |------|-----------|-----------|------------------|------------|-------------------|
-| 1 — Metadata | `api/lib/metadata.ts` | Always-on | Structural metadata only | None | Ring buffer, 50,000 events |
-| 2 — Telemetry | `src/lib/telemetry.ts` | Always-on (client) | Structural metadata only | None | Batched (20 events or 30s) |
-| 3 — Dataset | `api/lib/dataset.ts` | Opt-in (`contribute_to_dataset: true`) | Messages + responses + full pipeline metadata | None | FIFO buffer, 10,000 entries |
+| 1 — Operational Metadata | `api/lib/metadata.ts` | Always-on (API server) | Structural metadata only | None | Ring buffer, 50,000 events |
+| 2 — Client Privacy Boundary | `index.html` | Client application | Strictly zero telemetry (local-only storage) | None | N/A (all state in localStorage) |
+| 3 — Research Dataset | `api/lib/dataset.ts` | Opt-in (`contribute_to_dataset: true`) | Messages + responses + pipeline metadata | None | FIFO buffer, 10,000 entries |
 
-**Tier 1: ZDR Metadata Tracker (always-on, server-side).** Every API request generates a `MetadataEvent` record capturing operational telemetry without any message content. The `MetadataEvent` interface (`api/lib/metadata.ts:31–88`) defines the following fields:
+**Tier 1: Operational Metadata Tracker (API Server).** Every API request handled by the backend server generates a `MetadataEvent` record capturing operational telemetry without any message content. The `MetadataEvent` interface (`api/lib/metadata.ts`) defines the following fields:
 
 - `id`, `timestamp`: Event identity and chronological ordering
 - `endpoint`, `mode`, `tier`, `stream`: Request shape (which API path, standard vs. ULTRAPLINIAN, model tier, streaming flag)
@@ -376,13 +376,14 @@ A key challenge for empirical AI safety research is reproducibility: understandi
 
 **What Tier 1 NEVER records:** message content, system prompts, model responses, API keys, authentication tokens, IP addresses, user agent strings, or any personally identifiable information. This exclusion is enforced *by construction*: the `MetadataEvent` TypeScript interface has no fields capable of storing any of these values. A reviewer can verify this by inspecting the interface definition — there is no `content`, `prompt`, `messages`, `api_key`, `ip`, or `user` field.
 
-**Tier 2: Client-Side Telemetry Beacon (always-on, browser-side).** The client application fires structural metadata events to a Cloudflare Pages proxy endpoint (`/api/telemetry`), which commits batches to HuggingFace as JSONL. The `ChatTelemetryData` interface (`src/lib/telemetry.ts:35–74`) mirrors the server-side metadata structure: mode, model, duration, response length, success flag, pipeline configuration, AutoTune context detection, Parseltongue trigger counts (not the triggers themselves at this tier), and ULTRAPLINIAN race summary metadata. Events are batched in memory and flushed every 30 seconds or when the batch reaches 20 events, whichever comes first. Flushing is fire-and-forget — telemetry never blocks the UI or throws user-facing errors. On page unload, remaining events are sent via `navigator.sendBeacon()` for best-effort delivery.
+**Tier 2: Client-Side Zero-Telemetry Architecture.** The primary client application (`index.html`) operates under a strict zero-telemetry policy. Unlike conventional AI web apps that transmit user queries and interaction metrics to remote analytics dashboards, SPECTRA executes all client-side logic locally:
+- AutoTune context detection, Parseltongue perturbations, STM normalizations, and markdown rendering run directly in client memory.
+- Model credentials and chat sessions are preserved solely within browser `localStorage`.
+- Direct outbound connections are made solely to user-authorized endpoints (OpenRouter, Venice, or local loopback servers `localhost` / `127.0.0.1` / `::1`).
 
-**Privacy guarantees for Tier 2** are identical to Tier 1: NO message content, prompts, responses, API keys, tokens, or PII. The `TelemetryEvent` schema contains only structural metadata.
+**Tier 3: Opt-In Dataset Collection.** Described in Section 3.7, this tier is the only one that records message content and model responses. It activates exclusively when an API caller programmatically sets `contribute_to_dataset: true` in the request payload.
 
-**Tier 3: Opt-In Dataset Collection.** Described in Section 3.7, this tier is the only one that records message content and model responses. It activates exclusively when the caller sets `contribute_to_dataset: true` in the request payload.
-
-**Ring Buffer Architecture and Auto-Publish Pipeline.** Tiers 1 and 3 use in-memory ring buffers with automatic publishing to HuggingFace (`api/lib/hf-publisher.ts`). The publish pipeline operates as follows:
+**Ring Buffer Architecture and Auto-Publish Pipeline.** Tiers 1 and 3 on the API server use in-memory ring buffers with automatic publishing to HuggingFace (`api/lib/hf-publisher.ts`). The publish pipeline operates as follows:
 
 1. **Threshold trigger**: When a buffer reaches 80% of capacity (configurable via `HF_FLUSH_THRESHOLD`), an asynchronous, non-blocking flush is initiated.
 2. **Periodic trigger**: A background timer (default 30 minutes, configurable via `HF_FLUSH_INTERVAL_MS`) flushes any non-empty buffers.
@@ -392,11 +393,11 @@ A key challenge for empirical AI safety research is reproducibility: understandi
 
 Published files are organized in the HuggingFace dataset repository as `metadata/batch_<timestamp>_<seq>.jsonl` and `dataset/batch_<timestamp>_<seq>.jsonl`.
 
-**Aggregated Statistics.** The metadata system computes aggregated statistics via `getStats()` (`api/lib/metadata.ts:234–398`), producing a `MetadataStats` object with: request counts by mode/tier/endpoint, per-model query counts with win rates and average scores/durations/success rates, pipeline feature usage rates (spectra, autotune, parseltongue, STM module breakdown), context detection distribution, latency percentiles (p50/p95/p99), response length distributions, streaming metrics, and error breakdowns by categorized type. These aggregates support reproducibility analysis without exposing any individual request content.
+**Aggregated Statistics.** The metadata system computes aggregated statistics via `getStats()` (`api/lib/metadata.ts`), producing a `MetadataStats` object with: request counts by mode/tier/endpoint, per-model query counts with win rates and average scores/durations/success rates, pipeline feature usage rates (spectra, autotune, parseltongue, STM module breakdown), context detection distribution, latency percentiles (p50/p95/p99), response length distributions, streaming metrics, and error breakdowns by categorized type. These aggregates support reproducibility analysis without exposing any individual request content.
 
-**PII-Exclusion-by-Construction.** The privacy model across all three tiers follows a design principle we term *PII-exclusion-by-construction*: rather than collecting data and then scrubbing PII, the data schemas are designed with no fields capable of holding PII. This approach eliminates an entire class of privacy risks — there is no scrubbing step that could fail, no regex that could miss a phone number, and no anonymization that could be reversed. The TypeScript type system enforces this at compile time: a developer cannot accidentally store message content in a `MetadataEvent` because there is no field to put it in.
+**PII-Exclusion-by-Construction.** The privacy model across all operational tiers follows a design principle we term *PII-exclusion-by-construction*: rather than collecting data and then scrubbing PII, the data schemas are designed with no fields capable of holding PII. This approach eliminates an entire class of privacy risks — there is no scrubbing step that could fail, no regex that could miss a phone number, and no anonymization that could be reversed. The TypeScript type system enforces this at compile time: a developer cannot accidentally store message content in a `MetadataEvent` because there is no field to put it in.
 
-*Implementation: `api/lib/metadata.ts` (Tier 1), `src/lib/telemetry.ts` (Tier 2), `api/lib/dataset.ts` (Tier 3), `api/lib/hf-publisher.ts` (auto-publish pipeline).*
+*Implementation: `api/lib/metadata.ts` (Tier 1), `index.html` (Tier 2), `api/lib/dataset.ts` (Tier 3), `api/lib/hf-publisher.ts` (auto-publish pipeline).*
 
 ---
 
@@ -404,11 +405,11 @@ Published files are organized in the HuggingFace dataset repository as `metadata
 
 ### 4.1 Technology Stack
 
-The system is implemented in TypeScript (^5.3), consisting of:
-- **Core engines** (`src/lib/`, `src/stm/`): Pure TypeScript with no external dependencies. AutoTune, Parseltongue, and STM are pure functions suitable for both browser and Node.js environments.
-- **API server** (`api/`): Express.js (^5.2.1) REST API exposing all engines as HTTP endpoints, with bearer token authentication and in-memory sliding-window rate limiting (60 requests/minute, 1,000 requests/day per API key, configurable via environment variables). Executed via tsx (^4.21) for TypeScript-native runtime.
-- **Frontend** (`src/`): Next.js (^14.2) static-export single-page application with React (^18.2) and Zustand (^4.5) state management (persisted to localStorage).
-- **Runtime**: Node.js 20+ (LTS). No GPU or specialized hardware required.
+The system is implemented cleanly across two complementary deployment models:
+- **Standalone Client (`index.html`):** A zero-dependency single-page application built in vanilla modern JavaScript, CSS custom properties, and embedded marked.js markdown engine. Runs directly from `file:///` or any static HTTP server. State and conversations are self-contained in browser `localStorage`.
+- **API Server (`api/`):** Express.js REST API exposing all evaluation engines as HTTP endpoints, with Bearer token authentication and sliding-window rate limiting. Executed via tsx (`npx tsx api/server.ts`) for TypeScript-native execution without build artifacts.
+- **Hugging Face Space (`HF/`):** Self-contained deployment configuration for hosting SPECTRA as a public or private Hugging Face Space.
+- **Runtime**: Node.js 20+ (LTS) for the API proxy. Zero GPU requirements for the interface.
 
 ### 4.2 API Surface
 
@@ -432,23 +433,23 @@ The `/v1/chat/completions` endpoint defaults to SPECTRA system prompt ON, Parsel
 
 ### 4.3 Deployment
 
-A Dockerfile is provided for HuggingFace Spaces deployment (port 7860). The container runs `tsx api/server.ts` directly.
+- **Client Web Application:** Host `index.html` on any static provider (GitHub Pages, Cloudflare Pages, Netlify) or serve locally via `python -m http.server 8080`.
+- **API Server:** Run `npm run api` or `npx tsx api/server.ts`. For Hugging Face Spaces, deploy the `HF/` bundle using the Node SDK on port 7860.
 
-### 4.4 Lines of Code
+### 4.4 Component Architecture
 
-| Component | File | Lines |
-|-----------|------|-------|
-| AutoTune engine | `src/lib/autotune.ts` | 639 |
-| Feedback loop | `src/lib/autotune-feedback.ts` | ~200 |
-| Parseltongue engine | `src/lib/parseltongue.ts` | 433 |
-| STM modules | `src/stm/modules.ts` | 154 |
-| ULTRAPLINIAN engine | `api/lib/ultraplinian.ts` | 360 |
-| Dataset collection | `api/lib/dataset.ts` | 162 |
-| ZDR metadata tracker | `api/lib/metadata.ts` | ~400 |
-| Client telemetry beacon | `src/lib/telemetry.ts` | ~185 |
-| HuggingFace auto-publisher | `api/lib/hf-publisher.ts` | ~275 |
-| API server + routes | `api/server.ts`, `api/routes/*.ts` | ~500 |
-| **Total (engines + API + telemetry)** | | **~3,310** |
+| Component | Primary Location | Description |
+|-----------|------------------|-------------|
+| Client UI & Engine | `index.html` | Complete UI, AutoTune, Parseltongue, STM, marked.js renderer |
+| AutoTune engine | `index.html`, `HF/src/lib/autotune.ts` | Context detection and dynamic sampling parameter computation |
+| Feedback loop | `index.html`, `HF/src/lib/autotune-feedback.ts` | EMA-based parameter adaptation from rating signals |
+| Parseltongue engine | `index.html`, `HF/src/lib/parseltongue.ts` | Character perturbation (leetspeak, homoglyphs, zero-width) |
+| STM modules | `index.html`, `HF/src/stm/modules.ts` | Sequential output normalization (hedge reducer, direct, casual) |
+| ULTRAPLINIAN engine | `index.html`, `api/lib/ultraplinian.ts` | Multi-model parallel racing and scoring |
+| Dataset collection | `api/lib/dataset.ts` | Opt-in research dataset compilation |
+| Operational metadata | `api/lib/metadata.ts` | Server-side in-memory operational metrics |
+| HuggingFace publisher | `api/lib/hf-publisher.ts` | Buffer flushing and dataset publishing |
+| API server & routes | `api/server.ts`, `api/routes/*.ts` | OpenAI-compatible REST API endpoints |
 
 ---
 
@@ -718,27 +719,19 @@ The three-tier data collection architecture (Section 3.8) embodies a privacy-by-
 
 ### 6.5 Ethical Considerations
 
-**Three-tier data collection and privacy guarantees.** SPECTRA implements a three-tier data collection architecture (Section 3.8) with explicit, verifiable privacy guarantees at each tier. We enumerate these guarantees here for ethical review:
+**Data collection and privacy guarantees.** SPECTRA implements an explicit, verifiable privacy model across its architecture:
 
-*Tier 1 (ZDR Metadata, always-on):* Records only structural metadata (timestamps, endpoints, model names, scores, latencies, pipeline flags, error types). The `MetadataEvent` TypeScript interface contains zero fields for message content, prompts, responses, API keys, IP addresses, or any PII. This is verifiable by inspection of `api/lib/metadata.ts:31–88`.
+*Tier 1 (Operational Metadata, API server):* Records only structural metrics (timestamps, endpoints, model names, scores, latencies, pipeline flags, error types). The `MetadataEvent` TypeScript interface contains zero fields for message content, prompts, responses, API keys, IP addresses, or any PII. This is verifiable by inspection of `api/lib/metadata.ts`.
 
-*Tier 2 (Client Telemetry Beacon, always-on):* Records structural metadata from the client side (model, latency, pipeline configuration, context type). The `ChatTelemetryData` interface contains zero fields for message content or PII. This is verifiable by inspection of `src/lib/telemetry.ts:35–74`. Events are sent to a Cloudflare Pages proxy; no direct connection to HuggingFace is made from the client.
+*Tier 2 (Client-Side Zero-Telemetry Boundary):* The standalone web client application (`index.html`) operates with strictly zero telemetry. No background tracking beacons, analytical pings, or data logs are transmitted to external servers. All session histories and provider keys remain in client-side `localStorage`.
 
-*Tier 3 (Dataset Collection, opt-in only):* Records messages and responses, but only when the caller explicitly sets `contribute_to_dataset: true`. Even at this tier, the `DatasetEntry` interface has no fields for API keys, IP addresses, or authentication tokens. This is verifiable by inspection of `api/lib/dataset.ts:29–81`.
-
-The always-on nature of Tiers 1 and 2 means users interacting with a SPECTRA deployment generate metadata events without explicit per-request consent. We consider this ethically acceptable because: (a) no message content or PII is captured, (b) the metadata collected is equivalent in sensitivity to standard web server access logs (timestamps, endpoints, response codes, latencies), and (c) the metadata schema is fully open-source and inspectable. Deployments should nonetheless include a privacy notice informing users about metadata collection, consistent with standard web application practices.
-
-**IRB and ethics review.** Studies that use SPECTRA to collect Tier 3 (opt-in) data involving human participants — particularly studies where participants interact with the system and their messages are recorded — should undergo IRB review or equivalent institutional ethics review. The opt-in mechanism (`contribute_to_dataset: true`) provides a technical consent signal but does not by itself constitute informed consent under most human-subjects research frameworks. Researchers should ensure that participants are informed about: what data is collected, how it will be stored and published, that published data may be publicly accessible on HuggingFace, and that deletion is available via the API (`DELETE /v1/dataset/:id`).
-
-**Responsible disclosure.** Researchers who discover model vulnerabilities using SPECTRA should follow responsible disclosure practices before publishing findings. We recommend: (1) notifying the affected model provider with a detailed report at least 90 days before public disclosure; (2) providing the model provider with the specific Parseltongue technique, intensity, and trigger configuration that produced the finding; (3) working with the provider to validate the finding and develop mitigations; and (4) publishing the methodology (perturbation technique, parameter configuration) rather than specific prompt payloads, following the security research norm of disclosing the vulnerability class rather than a weaponized exploit.
-
-**Dual-use tension and mitigation.** SPECTRA exists in the inherent tension between security research and potential misuse. The Parseltongue module provides systematic character-level perturbation capabilities; the SPECTRA system prompt applies compliance-oriented framing; the ULTRAPLINIAN scoring function explicitly rewards anti-refusal behavior. Each of these could be used to probe model safety boundaries for research purposes or to circumvent safety measures for harmful purposes. Our mitigation strategy rests on four pillars: (1) *no novelty* — all techniques are documented in prior work (leetspeak, Unicode homoglyphs, zero-width characters, prompt framing) and SPECTRA systematizes rather than invents them; (2) *full transparency* — the complete system is open-source, enabling model providers to build defenses against these exact patterns; (3) *no effectiveness claims* — we deliberately avoid reporting success rates against any specific model's safety filters, to prevent providing a "menu" of working attacks; and (4) *configurable objectives* — the ULTRAPLINIAN scoring axes can be reconfigured by safety-oriented researchers (e.g., inverting the anti-refusal axis to reward refusal behavior).
+*Tier 3 (Dataset Collection, opt-in only):* Records messages and responses only when an API consumer explicitly supplies `contribute_to_dataset: true`. Even at this tier, the `DatasetEntry` interface has no fields for API keys, IP addresses, or authentication tokens (`api/lib/dataset.ts`).
 
 ---
 
 ### 6.6 Broader Impact Statement
 
-**Potential benefits for AI safety.** SPECTRA provides the alignment research community with a modular, open-source toolkit for studying LLM robustness at inference time. Specific contributions to safety research include: (1) systematic evaluation of how sampling parameters interact with model safety behaviors, an underexplored area; (2) reproducible character-level robustness probes that can be used to audit model safety across providers; (3) cross-model safety behavior comparison via ULTRAPLINIAN's multi-model racing; (4) an open dataset collection system that could contribute to shared safety evaluation benchmarks; and (5) a three-tier privacy-first telemetry architecture (Section 3.8) that enables longitudinal analysis of how safety evaluation tools are used in practice, with PII exclusion enforced by construction.
+**Potential benefits for AI safety.** SPECTRA provides the alignment research community with a modular, open-source toolkit for studying LLM robustness at inference time. Specific contributions to safety research include: (1) systematic evaluation of how sampling parameters interact with model safety behaviors, an underexplored area; (2) reproducible character-level robustness probes that can be used to audit model safety across providers; (3) cross-model safety behavior comparison via ULTRAPLINIAN's multi-model racing; (4) an open dataset collection system that could contribute to shared safety evaluation benchmarks; and (5) a privacy-first architecture that enables evaluation without compromising user confidentiality.
 
 The AutoTune feedback loop demonstrates that inference-time parameter adaptation can meaningfully shift model behavior without weight access — a finding with implications for both safety evaluation (adapting probes to discover specific failure modes) and safety improvement (adapting parameters to reduce harmful outputs).
 
@@ -750,13 +743,9 @@ The AutoTune feedback loop demonstrates that inference-time parameter adaptation
 
 ## 7. Conclusion
 
-We have presented SPECTRA, a modular research framework for evaluating LLM robustness and safety properties at inference time, comprising five independently composable components: context-adaptive parameter selection (AutoTune), online parameter learning from binary feedback, input perturbation for robustness testing (Parseltongue), multi-model comparative evaluation (ULTRAPLINIAN), and output normalization for safety assessment (STM). The system is implemented in approximately 3,300 lines of TypeScript, requires no model weight access, and is exposed via a REST API with a three-tier privacy-first telemetry architecture and opt-in dataset collection for open safety research.
+We have presented SPECTRA, a modular research framework for evaluating LLM robustness and safety properties at inference time, comprising five independently composable components: context-adaptive parameter selection (AutoTune), online parameter learning from binary feedback, input perturbation for robustness testing (Parseltongue), multi-model comparative evaluation (ULTRAPLINIAN), and output normalization for safety assessment (STM). The system is implemented cleanly as a zero-dependency standalone web application (`index.html`) accompanied by an optional Node/TypeScript REST API server (`api/`), requiring no model weight access and providing strict client-side privacy guarantees alongside optional programmatic dataset collection for open safety research.
 
 The primary contribution is providing the AI safety research community with a modular, open-source toolkit for systematic inference-time robustness evaluation. By operating entirely through standard chat completion APIs, SPECTRA enables safety researchers to study any model behind an API — including proprietary models — without requiring white-box access, training data, or provider-internal tooling. The framework's modular architecture allows each evaluation component to be studied in isolation or composed into multi-stage safety assessment pipelines.
-
-Our computational evaluation (Section 5) validates the reliability of all five components: AutoTune achieves 84.0% classification accuracy with a macro F1 of 84.2% on a 150-message benchmark (Table 3), ensuring that safety evaluations are conducted under appropriate context-specific parameter configurations. The feedback loop converges to 29–62% improvement across 5 synthetic user profiles within 19 ratings, supporting iterative safety evaluation protocols. The ULTRAPLINIAN scoring function achieves strict quality-tier ordering with 82-point discrimination, enabling meaningful cross-model safety comparisons. Parseltongue achieves 100% trigger detection across all 54 default triggers, providing a reliable foundation for character-level robustness probing.
-
-All components are open-source, all constants and thresholds are documented (Tables 1–2, Section 3), and all evaluation scripts are included in the repository (`research/eval_*.ts`). We believe that open-source safety evaluation tools serve the alignment community by enabling both reproducible robustness research and improved model defenses. The most important directions for future work are: (1) live multi-model safety comparison using the ULTRAPLINIAN pipeline, (2) cross-provider robustness studies using Parseltongue's perturbation framework, (3) developing open safety evaluation datasets via the opt-in collection system, and (4) expanding AutoTune's context patterns to support safety-domain-specific contexts (e.g., medical, legal, financial).
 
 ---
 
@@ -764,24 +753,21 @@ All components are open-source, all constants and thresholds are documented (Tab
 
 | Item | Status |
 |------|--------|
-| Source code available | Yes — repository withheld for anonymous review |
-| All hyperparameters documented | Yes — Tables 1–2, EMA α=0.3, MIN\_SAMPLES=3, MAX\_WEIGHT=0.5, SAMPLES\_FOR\_MAX=20, scoring weights in Section 3.6 |
-| All regex patterns inspectable | Yes — hardcoded in `src/lib/autotune.ts:102–133`, `src/lib/parseltongue.ts:43–67`, `src/stm/modules.ts:29–128` |
+| Source code available | Yes — public open-source repository |
+| All hyperparameters documented | Yes — Tables 1–2, EMA $\alpha=0.3$, MIN\_SAMPLES=3, MAX\_WEIGHT=0.5, SAMPLES\_FOR\_MAX=20, scoring weights in Section 3.6 |
+| All regex patterns inspectable | Yes — hardcoded in `index.html` (and `HF/src/lib/autotune.ts`, `HF/src/lib/parseltongue.ts`, `HF/src/stm/modules.ts`) |
 | Scoring function fully specified | Yes — 5 components with exact formulas in Section 3.6 |
 | Model list enumerated | Yes — 51 models across 5 tiers listed in `index.html` ULTRAPLINIAN_MODELS array |
-| Character maps enumerated | Yes — LEET\_MAP (26 entries, 85 substitutions) in `parseltongue.ts:70–97`, UNICODE\_HOMOGLYPHS (24 entries, 72 substitutions) in `parseltongue.ts:100–125` |
+| Character maps enumerated | Yes — LEET\_MAP (26 entries, 85 substitutions) and UNICODE\_HOMOGLYPHS (24 entries, 72 substitutions) in `index.html` |
 | Parameter bounds documented | Yes — Table in Section 3.2 |
-| Dataset schema documented | Yes — `DatasetEntry` interface in `api/lib/dataset.ts:26–78` |
-| Metadata schema documented | Yes — `MetadataEvent` interface in `api/lib/metadata.ts:31–88`, `ChatTelemetryData` in `src/lib/telemetry.ts:35–74` |
-| Telemetry architecture documented | Yes — three-tier design in Section 3.8, privacy guarantees verified by schema inspection |
-| Auto-publish pipeline documented | Yes — `api/lib/hf-publisher.ts`, snapshot-upload-clear pattern, threshold/periodic/shutdown triggers |
-| Deployment instructions | Yes — Dockerfile and API.md in repository |
-| Experimental results | Yes — 5 computational experiments in `research/eval_*.ts`, results in Section 5, Tables 3–10 |
-| Evaluation scripts included | Yes — `research/eval_autotune_classification.ts`, `eval_feedback_convergence.ts`, `eval_stm_precision.ts`, `eval_scoring_calibration.ts`, `eval_parseltongue_analysis.ts` |
+| Dataset schema documented | Yes — `DatasetEntry` interface in `api/lib/dataset.ts` |
+| Metadata schema documented | Yes — `MetadataEvent` interface in `api/lib/metadata.ts` |
+| Telemetry architecture documented | Yes — Zero-telemetry client architecture and server-side in-memory metrics |
+| Auto-publish pipeline documented | Yes — `api/lib/hf-publisher.ts`, snapshot-upload-clear pattern |
+| Deployment instructions | Yes — `API.md`, `CONTRIBUTING.md`, and `LOCAL_MODELS.md` |
 | Training data used | **None** — system is training-free |
-| Compute requirements | Minimal — TypeScript runtime, no GPU required; inference cost determined by OpenRouter pricing |
-| Key dependency versions | TypeScript ^5.3, Express ^5.2.1, Next.js ^14.2, React ^18.2, Node.js 20+, tsx ^4.21 |
-| Statistical reporting | Effect sizes, confidence intervals, and power analysis notes included (Sections 5.1, 6.3) |
+| Compute requirements | Minimal — Modern web browser or Node.js runtime, no GPU required |
+| Key dependency versions | Vanilla JavaScript (ES2022) in browser; Node.js 20+, Express ^5.2.1, tsx ^4.21 for API |
 
 ---
 

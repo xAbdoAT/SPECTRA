@@ -5,15 +5,14 @@ REST API exposing the **ULTRAPLINIAN** multi-model racing engine and core SPECTR
 ## Quick Start
 
 ```bash
-# Local
+# Local API server
 npm run api
 
-# Docker
-docker build -t spectra-api .
-docker run -p 7860:7860 spectra-api
+# Or run directly with tsx
+npx tsx api/server.ts
 
 # With auth enabled
-docker run -p 7860:7860 -e SPECTRA_API_KEY=your-secret-key spectra-api
+SPECTRA_API_KEY=your-secret-key npm run api
 ```
 
 ## Authentication
@@ -722,10 +721,11 @@ curl -H "Authorization: Bearer key" \
 
 ## Deploying on Hugging Face Spaces
 
-1. Create a new Space with **Docker** SDK
-2. Push this repo (or just `api/`, `src/lib/`, `src/stm/`, `Dockerfile`, `package.json`)
-3. Set secrets in Space settings:
-   - `SPECTRA_API_KEY` — your chosen API key for auth
+1. Create a new Space on Hugging Face using the **Node** SDK (or deploy the standalone `HF/` directory).
+2. Configure repository files from `HF/` or point to `api/server.ts`.
+3. Set environment secrets in Space settings:
+   - `SPECTRA_API_KEY` — your chosen secret key for API authentication
+   - `OPENROUTER_API_KEY` — optional server-wide provider key
 4. The API will be live at `https://<your-space>.hf.space/v1/`
 
 ## Python Client Examples

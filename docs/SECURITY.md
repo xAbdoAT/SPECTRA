@@ -4,45 +4,51 @@
 
 If you discover a security vulnerability in SPECTRA, please report it responsibly.
 
-**Please do NOT open a public GitHub issue for security vulnerabilities.**
+**Please do NOT disclose security vulnerabilities in public issue trackers.**
 
-### What to include
+### What to Include
 
-- Description of the vulnerability
-- Steps to reproduce
-- Impact assessment
-- Suggested fix (if you have one)
+- Detailed description of the vulnerability and its potential impact
+- Clear, reproducible steps or a proof of concept
+- Suggested remediation or patch (if available)
+- Affected component (`index.html`, `api/`, or `HF/`)
 
-### Response timeline
+### Response Timeline
 
-- **Acknowledgement:** within 48 hours
-- **Initial assessment:** within 7 days
-- **Fix or mitigation:** within 30 days for critical issues
+- **Initial Acknowledgement:** Within 48 hours
+- **Assessment & Triage:** Within 7 business days
+- **Remediation & Patch Release:** Within 30 days for confirmed critical vulnerabilities
 
-### Scope
+## Scope
 
-In scope:
-- The SPECTRA API server (`api/`)
-- The frontend application (`src/`)
-- Docker / deployment configuration
-- Authentication and authorization logic
+### In Scope
+- The primary standalone web application (`index.html`), including:
+  - Content Security Policy (CSP) enforcement
+  - Markdown sanitizer and XSS prevention
+  - Safe credential management in `localStorage`
+  - Local transport boundaries (`localhost`, `127.0.0.1`, `[::1]`)
+- The optional API proxy server (`api/`), including:
+  - Authentication and token handling
+  - Tier-based rate limiting
+  - CORS header restrictions and request sanitization
+- Hugging Face Space configuration (`HF/`)
 
-Out of scope:
-- Third-party dependencies (report upstream, but let us know)
+### Out of Scope
+- Upstream third-party model providers (OpenRouter, Venice, Hugging Face, Ollama, LM Studio)
+- Denial of service attacks against community-hosted demonstration instances
+- Attacks requiring physical access to an unlocked client device or browser profile
 - Social engineering attacks
-- Denial of service attacks against hosted instances
 
 ## Supported Versions
 
-| Version | Supported |
-|---------|-----------|
-| 0.4.x   | Yes       |
-| < 0.4   | No        |
+| Version | Status | Notes |
+|---------|--------|-------|
+| 1.0.x (Current) | Supported | Active development on `main` branch |
+| Legacy (Godmode pre-fork) | End of Life | Not supported |
 
-## Security Design
+## Security Architecture & Design Principles
 
-- **Authentication:** Bearer token with constant-time comparison (timing-attack resistant)
-- **Rate limiting:** Tier-aware sliding window (per-minute + per-day + lifetime)
-- **Headers:** HSTS, CSP, X-Content-Type-Options, X-Frame-Options, Permissions-Policy
-- **Docker:** Non-root containers, minimal base images
-- **Data:** Zero PII storage, opt-in dataset collection only
+- **Zero-Telemetry by Design:** SPECTRA does not run silent analytics beacons, tracking pixels, or background data collection. Provider credentials and conversation histories never leave your device unless explicitly dispatched to the model provider you specify.
+- **Strict Content Security Policy:** `index.html` enforces a strict CSP limiting connections strictly to authorized providers (`openrouter.ai`, `api.venice.ai`, loopback local models) and verified runtime assets.
+- **Constant-Time Verification:** The API server enforces constant-time string comparisons for Bearer tokens to mitigate timing attacks.
+- **Loopback Enforcement:** Local model requests are confined to loopback addresses (`localhost`, `127.0.0.1`, `[::1]`) to prevent arbitrary internal network probing.

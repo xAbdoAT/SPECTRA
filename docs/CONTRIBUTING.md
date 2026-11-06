@@ -1,42 +1,64 @@
 # Contributing to SPECTRA
 
-Thanks for your interest in contributing! This project is licensed under AGPL-3.0.
+Contributions to SPECTRA are welcome under the AGPL-3.0 license.
 
-## Getting Started
+## Repository Architecture
 
-1. Fork the repo
-2. Clone your fork: `git clone https://github.com/<you>/SPECTRA.git`
-3. Install dependencies: `npm install`
-4. Copy `.env.example` to `.env` and add your API keys
-5. Start the dev server: `npm run dev`
+SPECTRA is designed to be lightweight, modular, and privacy-preserving.
 
-## Development
+- **Primary Application (`index.html`):** Standalone, zero-dependency client application. Contains the complete UI, multi-model cognition engine, AutoTune heuristics, Parseltongue obfuscation, and markdown renderer. Runs in any modern browser without a build step.
+- **API Proxy (`api/`):** Optional TypeScript / Express server (`api/server.ts`) exposing OpenAI-compatible endpoints (`/v1/chat/completions`) and multi-model racing for server-to-server or programmatic integration.
+- **Hugging Face Space (`HF/`):** Self-contained deployment bundle configured for running SPECTRA on Hugging Face Spaces.
+- **Documentation (`docs/`):** Architecture documentation, research specifications (`PAPER.md`), API reference (`API.md`), local model guides (`LOCAL_MODELS.md`), and security policies (`SECURITY.md`).
 
-- **Frontend:** Next.js + React + TypeScript in `src/`
-- **API proxy:** Express server in `api/server.ts`
-- **HF Space build:** Standalone Express app in `HF/`
+## Local Development
 
-## Pull Requests
+### 1. Client Application (`index.html`)
 
-1. Create a feature branch: `git checkout -b feat/my-feature`
-2. Make your changes and test locally
-3. Commit with clear messages (e.g. `fix: resolve CORS on /chat endpoint`)
-4. Push and open a PR against `main`
+No compilation or package installation is required to work on the main client application.
+
+```bash
+# Clone the repository
+git clone https://github.com/xAbdoAT/G0DM0D3.git
+cd G0DM0D3
+
+# Serve with any static HTTP server (or open index.html directly in a browser)
+python -m http.server 8080
+# or
+npx serve .
+```
+
+Open `http://localhost:8080` in your browser. All changes to `index.html` are immediately testable upon refreshing the browser.
+
+### 2. API Proxy (`api/`)
+
+If you are developing or testing the optional backend proxy:
+
+```bash
+# Install dependencies
+npm install
+
+# Start the API proxy with auto-reload
+npm run api
+```
+
+The API server will listen on `http://localhost:7860`.
 
 ## Guidelines
 
-- Keep PRs focused — one feature or fix per PR
-- Don't commit API keys, secrets, or credentials
-- Test your changes before opening a PR
-- Be respectful in discussions
+- **Privacy & Security First:** Never introduce external tracking, third-party analytics, or silent telemetry beacons. User API keys and conversation history must remain restricted to local browser storage (`localStorage`) or local memory.
+- **Maintain Documentation Integrity:** If you modify API endpoints, state management, or UI capabilities, update the corresponding documentation files in `docs/`.
+- **Focused Pull Requests:** Keep pull requests concise and scoped to a single fix or feature. Include clear reproduction steps or test verification in the PR description.
+- **No Credentials:** Never commit API keys, personal tokens, or production environment files.
 
 ## Reporting Issues
 
 Open a GitHub issue with:
+- Clear description of the unexpected behavior
 - Steps to reproduce
-- Expected vs actual behavior
-- Browser/OS info if relevant
+- Expected outcome versus observed outcome
+- Environment details (browser, operating system, and model provider if applicable)
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the AGPL-3.0 license.
+By contributing, you agree that your code will be licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).

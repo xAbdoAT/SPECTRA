@@ -1,72 +1,89 @@
-# Run SPECTRA with local models
+# Running SPECTRA with Local Models
 
-SPECTRA can use any local server that implements the OpenAI-compatible
-`/v1/models` and `/v1/chat/completions` endpoints. The local transport is
-restricted to `localhost`, `127.0.0.1`, and `::1`.
+SPECTRA can interface directly with any local inference server that provides OpenAI-compatible endpoints (`/v1/models` and `/v1/chat/completions`). To protect private internal networks, local requests are strictly restricted to loopback addresses (`localhost`, `127.0.0.1`, and `::1`).
 
-## Quick start with Ollama
+---
 
-1. Install Ollama and pull one or more models:
+## 1. Quick Start with Ollama
+
+1. Install Ollama and pull your desired models:
 
    ```bash
-   ollama pull qwen3:8b
+   ollama pull qwen2.5:7b
+   ollama pull llama3.1:8b
+   ```
+
+2. Start the Ollama server:
+
+   ```bash
    ollama serve
    ```
 
-2. In SPECTRA, open **Settings → API Keys → Local Models**.
-3. Enter `http://localhost:11434/v1` as the base URL.
-4. Click **Test & Discover Models**.
-5. Enable **Local-only mode** to block OpenRouter and Venice model calls and
-   disable SPECTRA app telemetry.
+3. In SPECTRA, click **Settings (⚙️) → API Keys → Local Models**.
+4. Set the **Base URL** to `http://localhost:11434/v1`.
+5. Click **Test & Discover Models**. SPECTRA will query `/v1/models` and populate available options.
+6. Toggle **Local-only mode** if you wish to restrict all operations to local inference and prevent any outbound cloud calls to OpenRouter or Venice.
 
-When using the hosted `https://github.com/xAbdoAT/SPECTRA` page, Ollama must allow that browser
-origin. Start Ollama with an origin configuration that includes
-`https://github.com/xAbdoAT/SPECTRA`, then restart the server. If you do not want to expose a
-local endpoint to a hosted page, serve SPECTRA locally as described below.
+> **Note on CORS:** If you access SPECTRA from a hosted URL (e.g. GitHub Pages or a remote static host), your browser will require Ollama to allow Cross-Origin Resource Sharing (CORS). On Linux/macOS, launch Ollama with:
+> ```bash
+> OLLAMA_ORIGINS="*" ollama serve
+> ```
+> On Windows PowerShell:
+> ```powershell
+> $env:OLLAMA_ORIGINS="*" ; ollama serve
+> ```
+> If you prefer not to configure CORS on Ollama, serve SPECTRA locally as described below.
 
-## Quick start with LM Studio
+---
 
-1. Load a model in LM Studio.
-2. Open the Developer tab and start the local server.
-3. Enable browser/CORS access for the origin from which SPECTRA is loaded.
-4. Use `http://localhost:1234/v1` in SPECTRA and click
-   **Test & Discover Models**.
+## 2. Quick Start with LM Studio
 
-## Run the interface locally
+1. Open LM Studio and load your selected model into memory.
+2. Navigate to the **Local Server** (Developer) tab and start the server on port `1234`.
+3. In LM Studio's server settings, verify that **CORS** is enabled.
+4. In SPECTRA Settings, enter `http://localhost:1234/v1` as the Base URL and click **Test & Discover Models**.
 
-From the repository root:
+---
+
+## 3. Quick Start with vLLM / llama.cpp / LocalAI
+
+Any server exposing an OpenAI-compliant `/v1` endpoint is supported:
+
+- **vLLM:** Start with `python -m vllm.entrypoints.openai.api_server --model <model_path> --port 8000`
+- **llama.cpp:** Start `llama-server -m <path-to-gguf> --port 8080`
+- Set the base URL in SPECTRA to the appropriate port (e.g., `http://localhost:8000/v1`).
+
+---
+
+## 4. Serving SPECTRA Locally
+
+To run SPECTRA completely offline with maximum privacy:
 
 ```bash
-python3 -m http.server 8080
+# From the repository root:
+python -m http.server 8080
 ```
 
-Open `http://localhost:8080`, configure the local model endpoint, and enable
-**Local-only mode**. In this mode SPECTRA:
+Open `http://localhost:8080` in your web browser. In this setup:
+- All assets are loaded from your own filesystem.
+- No network requests are made to third-party CDNs.
+- Local model endpoints communicate directly across your loopback interface.
+- Conversation histories and API settings remain stored exclusively in your browser's local storage (`localStorage`).
 
-- excludes OpenRouter and Venice from every ULTRAPLINIAN race;
-- disables metadata telemetry and clears pending telemetry events;
-- uses local models for query classification, TASTEMAKER judging, refusal
-  checks, the critique coaching pass, accuracy checks, and Liquid refinement;
-- keeps conversations, settings, and keys in browser storage.
+---
 
-On the hosted `SPECTRA` page, Local-only mode does not stop normal webpage,
-font, hosting, or browser-origin traffic. Self-hosting `index.html` and using
-Local-only mode provides the strongest local boundary. Your local inference
-server may also keep its own logs; consult its configuration.
+## 5. Multi-Model Local Racing
 
-Multiple comma-separated model IDs can race together. Local-only mode uses the
-first configured model for helper/judge calls, so place the strongest local
-judge first. Image analysis works only when that model accepts OpenAI-compatible
-image message parts.
+SPECTRA supports racing multiple local models simultaneously:
+
+1. In the **Local Model IDs** field in Settings, enter multiple model names separated by commas (for example: `qwen2.5:7b, llama3.1:8b, mistral:7b`).
+2. The first listed model acts as the primary evaluator for classification, verification checks, and refinement.
+3. When you submit a prompt, SPECTRA streams inference across all specified local models concurrently and presents their responses side-by-side or allows you to select the preferred generation.
+
+---
 
 ## Troubleshooting
 
-- **Connection failed / Failed to fetch:** start the local server and enable
-  CORS for the page origin (`https://github.com/xAbdoAT/SPECTRA` or your local web origin).
-- **No models returned:** confirm `GET <base-url>/models` returns OpenAI-style
-  `{ "data": [{ "id": "..." }] }` JSON.
-- **Responses are slow:** configure one model instead of several, disable
-  coaching or Liquid refinement, or lower Max Tokens in Settings.
-- **Model rejects a parameter:** update the local server or use its
-  OpenAI-compatibility mode. SPECTRA sends standard chat-completion fields and
-  omits cloud-specific reasoning controls for local requests.
+- **Failed to fetch / Connection refused:** Ensure your local server is actively running and listening on the expected port. Confirm CORS permissions are allowed on the local server.
+- **No models found:** Verify that `GET <base-url>/models` returns an OpenAI-standard `{ "data": [{ "id": "..." }] }` payload.
+- **High latency:** Racing multiple large models simultaneously requires sufficient GPU VRAM and CPU threads. If latency is high, configure a single lightweight model (e.g. 7B or 8B quantized) or lower **Max Tokens** in Settings.
