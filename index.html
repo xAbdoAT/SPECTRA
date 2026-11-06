@@ -4096,6 +4096,12 @@ RESPOND WITH EXACTLY ONE LINE. No explanation, no preamble.`;
     }
 
     async function startOpenRouterLogin() {
+      if (window.location.protocol === 'file:') {
+        openSettings();
+        switchSettingsTab('api');
+        alert('OpenRouter OAuth requires an http/https server origin. When running locally from file:///, please paste your API key directly into Settings → API Keys.');
+        return;
+      }
       try {
         const codeVerifier = generateCodeVerifier();
         sessionStorage.setItem('or_code_verifier', codeVerifier);
@@ -16116,7 +16122,8 @@ Ignoring conversation history will cause you to LOSE the evaluation.`;
       document.getElementById('customSystemPromptInput').value = state.customSystemPrompt || '';
       document.getElementById('customSystemPromptInput').disabled = !state.customSystemPromptEnabled;
       updateSystemPromptUI();
-      document.getElementById('noLogMode').checked = state.noLogMode;
+      const noLogEl = document.getElementById('noLogMode');
+      if (noLogEl) noLogEl.checked = state.noLogMode;
       document.getElementById('showMagic').checked = state.showMagic;
       document.getElementById('waitingGameSelect').value = state.waitingGame || 'snake';
       document.getElementById('autoRetry').checked = state.autoRetry;
@@ -16286,8 +16293,8 @@ Ignoring conversation history will cause you to LOSE the evaluation.`;
       state.customSystemPromptEnabled = document.getElementById('customSystemPromptEnabled').checked;
       state.customSystemPrompt = document.getElementById('customSystemPromptInput').value;
       updateSystemPromptUI();
-      state.noLogMode = document.getElementById('noLogMode').checked;
-      if (state.noLogMode || state.localOnly) { _telemetry.buffer.length = 0; }
+      const noLogEl = document.getElementById('noLogMode');
+      if (noLogEl) state.noLogMode = noLogEl.checked;
       state.showMagic = document.getElementById('showMagic').checked;
       state.waitingGame = document.getElementById('waitingGameSelect').value;
       state.autoRetry = document.getElementById('autoRetry').checked;
