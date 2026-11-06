@@ -1,34 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
   <defs>
-    <linearGradient id="lava" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ff4500;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#ff6600;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#ffcc00;stop-opacity:1" />
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#141720" />
+      <stop offset="100%" stop-color="#0a0b0e" />
     </linearGradient>
-    <linearGradient id="mountain" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#444;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#1a1a1a;stop-opacity:1" />
+    <linearGradient id="border" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2a3042" />
+      <stop offset="50%" stop-color="#1e2230" />
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0.45" />
     </linearGradient>
-    <radialGradient id="glow" cx="50%" cy="20%" r="50%">
-      <stop offset="0%" style="stop-color:#ff4500;stop-opacity:0.6" />
-      <stop offset="100%" style="stop-color:#ff4500;stop-opacity:0" />
-    </radialGradient>
+    <linearGradient id="emerald" x1="20" y1="26" x2="48" y2="74" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
   </defs>
-  <!-- Eruption glow -->
-  <ellipse cx="50" cy="25" rx="30" ry="25" fill="url(#glow)"/>
-  <!-- Volcano body -->
-  <polygon points="50,30 15,85 85,85" fill="url(#mountain)" stroke="#00ff41" stroke-width="1.5"/>
-  <!-- Crater -->
-  <ellipse cx="50" cy="32" rx="10" ry="4" fill="#1a1a1a" stroke="#ff4500" stroke-width="1"/>
-  <!-- Lava eruption center -->
-  <path d="M46,32 Q44,18 48,8 Q50,5 52,8 Q56,18 54,32" fill="url(#lava)" opacity="0.9"/>
-  <!-- Lava splashes left -->
-  <path d="M44,28 Q38,15 35,12" fill="none" stroke="#ff6600" stroke-width="2" stroke-linecap="round"/>
-  <circle cx="35" cy="11" r="2" fill="#ffcc00"/>
-  <!-- Lava splashes right -->
-  <path d="M56,28 Q62,15 65,12" fill="none" stroke="#ff6600" stroke-width="2" stroke-linecap="round"/>
-  <circle cx="65" cy="11" r="2" fill="#ffcc00"/>
-  <!-- Green matrix-style accents on volcano -->
-  <line x1="30" y1="70" x2="35" y2="60" stroke="#00ff41" stroke-width="0.5" opacity="0.4"/>
-  <line x1="70" y1="70" x2="65" y2="60" stroke="#00ff41" stroke-width="0.5" opacity="0.4"/>
+
+  <!-- Obsidian squircle keycap -->
+  <rect x="4" y="4" width="92" height="92" rx="22" fill="url(#bg)" stroke="url(#border)" stroke-width="2.5" />
+
+  <!-- Subtle inner keycap rim -->
+  <rect x="8" y="8" width="84" height="84" rx="18" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1" />
+
+  <!-- Left: Terminal prompt prism chevron (›) -->
+  <path d="M24 29L46 50L24 71" stroke="url(#emerald)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- Right: Parallel multi-model racing spectrum bars + terminal underscore (_) -->
+  <!-- Tier 1: High-velocity stream -->
+  <rect x="56" y="27" width="22" height="8" rx="4" fill="#10b981" fill-opacity="0.55" />
+  <!-- Tier 2: Mid-spectrum race -->
+  <rect x="60" y="45" width="18" height="8" rx="4" fill="#10b981" fill-opacity="0.85" />
+  <!-- Tier 3: Active terminal underscore / winning completion -->
+  <rect x="50" y="63" width="28" height="9" rx="4.5" fill="#f4f4f6" />
 </svg>
