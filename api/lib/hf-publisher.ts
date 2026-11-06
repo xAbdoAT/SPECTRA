@@ -14,7 +14,7 @@
  *
  * Requires:
  *   HF_TOKEN          — HuggingFace write token (hf_...)
- *   HF_DATASET_REPO   — target repo (e.g. "pliny-the-prompter/SPECTRA")
+ *   HF_DATASET_REPO   — target repo (e.g. "spectra-org/SPECTRA")
  *
  * File layout in the HF repo:
  *   metadata/batch_<timestamp>_<seq>.jsonl

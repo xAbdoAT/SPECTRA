@@ -179,7 +179,7 @@ When configured (via `HF_TOKEN` and `HF_DATASET_REPO` environment variables), SP
 
 | Detail | Value |
 |---|---|
-| Default repository | `pliny-the-prompter/spectra` |
+| Default repository | `spectra-org/spectra` |
 | File format | JSONL (JSON Lines) |
 | API metadata path | `metadata/batch_<timestamp>.jsonl` |
 | API opt-in dataset path | `dataset/batch_<timestamp>.jsonl` |

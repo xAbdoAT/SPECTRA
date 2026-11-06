@@ -34,7 +34,7 @@ datasetRoutes.get('/export', (req, res) => {
         name: 'SPECTRA Research Dataset',
         description: 'Opt-in collection of LLM interactions with AutoTune, Parseltongue, and ULTRAPLINIAN pipeline metadata.',
         license: 'AGPL-3.0',
-        source: 'https://huggingface.co/datasets/pliny-the-prompter/SPECTRA',
+        source: 'https://huggingface.co/datasets/spectra-org/SPECTRA',
         exported_at: new Date().toISOString(),
         total_entries: dataset.length,
       },

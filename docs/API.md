@@ -598,7 +598,7 @@ JSONL format is directly compatible with HuggingFace Datasets:
 curl -H "Authorization: Bearer key" https://your-space.hf.space/v1/dataset/export?format=jsonl > dataset.jsonl
 
 # Upload to HuggingFace
-huggingface-cli upload pliny-the-prompter/spectra dataset.jsonl
+huggingface-cli upload spectra-org/spectra dataset.jsonl
 ```
 
 ### `DELETE /v1/dataset/:id`
@@ -609,7 +609,7 @@ Delete a specific entry (right to delete).
 
 ## Research API
 
-Read-access endpoints for the [`pliny-the-prompter/spectra`](https://huggingface.co/datasets/pliny-the-prompter/spectra) HuggingFace dataset. Query, filter, and download the full published corpus — not just the current in-memory buffer.
+Read-access endpoints for the [`spectra-org/spectra`](https://huggingface.co/datasets/spectra-org/spectra) HuggingFace dataset. Query, filter, and download the full published corpus — not just the current in-memory buffer.
 
 Requires `HF_TOKEN` + `HF_DATASET_REPO` environment variables.
 
@@ -631,7 +631,7 @@ Aggregate stats across all published batch files in the HF repo.
   "dataset_size_bytes": 524288,
   "earliest_batch": "2025-01-15T10-30-00-000Z",
   "latest_batch": "2025-06-20T14-22-00-000Z",
-  "repo": "pliny-the-prompter/spectra",
+  "repo": "spectra-org/spectra",
   "enabled": true
 }
 ```
@@ -831,6 +831,6 @@ print(r.json()["message"])
 | `RATE_LIMIT_PER_MINUTE` | Requests per minute per key (fallback) | `60` |
 | `RATE_LIMIT_PER_DAY` | Requests per day per key (fallback) | `1000` |
 | `HF_TOKEN` | HuggingFace write token for auto-publish + research read | _(none)_ |
-| `HF_DATASET_REPO` | Target HF dataset repo | `pliny-the-prompter/spectra` |
+| `HF_DATASET_REPO` | Target HF dataset repo | `spectra-org/spectra` |
 | `HF_FLUSH_THRESHOLD` | Auto-flush at this % of buffer capacity | `0.8` |
 | `HF_FLUSH_INTERVAL_MS` | Periodic flush interval (ms) | `1800000` (30 min) |

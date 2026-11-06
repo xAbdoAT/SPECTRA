@@ -1,7 +1,7 @@
 /**
  * Research API Routes
  *
- * Read-access endpoints for the pliny-the-prompter/SPECTRA HuggingFace
+ * Read-access endpoints for the spectra-org/SPECTRA HuggingFace
  * dataset. Lets researchers query, filter, and download the full
  * published corpus — not just the current in-memory buffer.
  *
@@ -38,8 +38,8 @@ let lastFlushTime = 0
 researchRoutes.get('/info', (_req, res) => {
   res.json({
     name: 'SPECTRA Research Dataset',
-    repo: 'pliny-the-prompter/SPECTRA',
-    repo_url: 'https://huggingface.co/datasets/pliny-the-prompter/SPECTRA',
+    repo: 'spectra-org/SPECTRA',
+    repo_url: 'https://huggingface.co/datasets/spectra-org/SPECTRA',
     license: 'AGPL-3.0',
     description: 'Open research dataset for LLM robustness and safety evaluation. Contains opt-in interaction data with full pipeline metadata from ULTRAPLINIAN multi-model racing, AutoTune context-adaptive parameter tuning, Parseltongue obfuscation, and STM output normalization.',
     hf_reader_enabled: isReaderEnabled(),

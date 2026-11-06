@@ -46,7 +46,7 @@ Open `http://localhost:8080`, configure the local model endpoint, and enable
 - excludes OpenRouter and Venice from every ULTRAPLINIAN race;
 - disables metadata telemetry and clears pending telemetry events;
 - uses local models for query classification, TASTEMAKER judging, refusal
-  checks, the Pliny coaching pass, accuracy checks, and Liquid refinement;
+  checks, the critique coaching pass, accuracy checks, and Liquid refinement;
 - keeps conversations, settings, and keys in browser storage.
 
 On the hosted `SPECTRA` page, Local-only mode does not stop normal webpage,
