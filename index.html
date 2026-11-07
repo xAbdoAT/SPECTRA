@@ -3988,9 +3988,23 @@
     function trackEvent(type, data) {}
     async function flushTelemetry() {}
 
-    window.addEventListener('beforeunload', () => {
-      if (_saveStatePending) saveStateNow();
+    // ─── Lifecycle Persistence Engine (Mobile Safari, Chrome, Brave, Desktop) ───
+    // On iOS Safari and Android Chrome, beforeunload rarely fires when tabs are
+    // backgrounded, minimized, or killed. visibilitychange and pagehide are the
+    // authoritative W3C lifecycle hooks for guaranteed persistence.
+    function _triggerLifecycleStateSave() {
+      try {
+        if (typeof saveStateNow === 'function') saveStateNow();
+      } catch (_) {}
+    }
+    window.addEventListener('beforeunload', _triggerLifecycleStateSave);
+    window.addEventListener('pagehide', _triggerLifecycleStateSave);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') _triggerLifecycleStateSave();
     });
+    if ('freeze' in window) {
+      window.addEventListener('freeze', _triggerLifecycleStateSave);
+    }
 
     async function classifyHarm(query) {
       return null;
@@ -11327,29 +11341,130 @@ Ignoring conversation history will cause you to LOSE the evaluation.`;
       });
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // CLIENT PERSISTENCE ENGINE (localStorage + IndexedDB + Cookie Mirror)
+    // Ensures chats, configs, credentials, and settings survive page reloads,
+    // browser closes/restarts, tab switches, and mobile memory suspensions.
+    // ═══════════════════════════════════════════════════════════════════
+
+    const IDB_NAME = 'spectra_db';
+    const IDB_STORE = 'spectra_store';
+    const IDB_VERSION = 1;
+
+    function openSpectraIDB() {
+      return new Promise((resolve) => {
+        if (!window.indexedDB) return resolve(null);
+        try {
+          const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(IDB_STORE)) {
+              db.createObjectStore(IDB_STORE);
+            }
+          };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => resolve(null);
+        } catch (_) {
+          resolve(null);
+        }
+      });
+    }
+
+    async function idbGet(key) {
+      try {
+        const db = await openSpectraIDB();
+        if (!db) return null;
+        return new Promise((resolve) => {
+          const tx = db.transaction(IDB_STORE, 'readonly');
+          const store = tx.objectStore(IDB_STORE);
+          const req = store.get(key);
+          req.onsuccess = () => resolve(req.result ?? null);
+          req.onerror = () => resolve(null);
+        });
+      } catch (_) {
+        return null;
+      }
+    }
+
+    async function idbSet(key, value) {
+      try {
+        const db = await openSpectraIDB();
+        if (!db) return false;
+        return new Promise((resolve) => {
+          const tx = db.transaction(IDB_STORE, 'readwrite');
+          const store = tx.objectStore(IDB_STORE);
+          store.put(value, key);
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => resolve(false);
+        });
+      } catch (_) {
+        return false;
+      }
+    }
+
+    async function idbDel(key) {
+      try {
+        const db = await openSpectraIDB();
+        if (!db) return false;
+        return new Promise((resolve) => {
+          const tx = db.transaction(IDB_STORE, 'readwrite');
+          const store = tx.objectStore(IDB_STORE);
+          store.delete(key);
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => resolve(false);
+        });
+      } catch (_) {
+        return false;
+      }
+    }
+
+    // Cookie helper for lightweight critical preference redundancy
+    function setCookie(name, val, days = 365) {
+      try {
+        const expires = new Date(Date.now() + days * 864e5).toUTCString();
+        document.cookie = `${name}=${encodeURIComponent(val)}; expires=${expires}; path=/; SameSite=Lax`;
+      } catch (_) {}
+    }
+
+    function getCookie(name) {
+      try {
+        const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + '=([^;]*)'));
+        return match ? decodeURIComponent(match[1]) : null;
+      } catch (_) {
+        return null;
+      }
+    }
+
     // ─── API key encryption helpers (AES-GCM via Web Crypto) ─────────
-    // Encrypts the API key before it hits localStorage. The encryption
-    // key is derived from a random per-device salt (stored separately).
-    // This prevents trivial exfiltration of the key from localStorage
-    // by XSS or malicious extensions — they'd need to also read the
-    // salt and re-derive the key.
+    // Encrypts the API key before it hits storage. The encryption
+    // key is derived from a random per-device salt and cached in memory
+    // so PBKDF2 runs only once per session rather than blocking the CPU on every save.
+    let _cachedCryptoKey = null;
+
     async function _getOrCreateCryptoKey() {
+      if (_cachedCryptoKey) return _cachedCryptoKey;
       const SALT_KEY = 'spectra-device-salt';
-      let saltHex = localStorage.getItem(SALT_KEY);
+      let saltHex = null;
+      try { saltHex = localStorage.getItem(SALT_KEY); } catch (_) {}
       if (!saltHex) {
         const saltBytes = crypto.getRandomValues(new Uint8Array(16));
         saltHex = Array.from(saltBytes).map(b => b.toString(16).padStart(2, '0')).join('');
-        localStorage.setItem(SALT_KEY, saltHex);
+        try { localStorage.setItem(SALT_KEY, saltHex); } catch (_) {}
       }
       const saltBytes = new Uint8Array(saltHex.match(/.{2}/g).map(h => parseInt(h, 16)));
+      const originKey = (typeof window !== 'undefined' && window.location && window.location.origin)
+        ? window.location.origin
+        : 'spectra-app';
+      if (!crypto.subtle) throw new Error('WebCrypto unavailable');
       const baseKey = await crypto.subtle.importKey(
-        'raw', new TextEncoder().encode(window.location.origin + '-spectra'),
+        'raw', new TextEncoder().encode(originKey + '-spectra'),
         'PBKDF2', false, ['deriveKey']
       );
-      return crypto.subtle.deriveKey(
+      _cachedCryptoKey = await crypto.subtle.deriveKey(
         { name: 'PBKDF2', salt: saltBytes, iterations: 100000, hash: 'SHA-256' },
         baseKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
       );
+      return _cachedCryptoKey;
     }
 
     async function encryptApiKey(plaintext) {
@@ -11360,7 +11475,6 @@ Ignoring conversation history will cause you to LOSE the evaluation.`;
         const ct = await crypto.subtle.encrypt(
           { name: 'AES-GCM', iv }, key, new TextEncoder().encode(plaintext)
         );
-        // Store as "enc:iv_hex:ct_hex"
         const ivHex = Array.from(iv).map(b => b.toString(16).padStart(2, '0')).join('');
         const ctHex = Array.from(new Uint8Array(ct)).map(b => b.toString(16).padStart(2, '0')).join('');
         return `enc:${ivHex}:${ctHex}`;
@@ -11566,12 +11680,20 @@ Ignoring conversation history will cause you to LOSE the evaluation.`;
       }
     }
 
+    let _keyDecryptPromise = null;
+    let _keyDecryptedOnce = false;
+
     function loadState() {
-      const saved = localStorage.getItem('spectra-state');
+      let saved = null;
+      try {
+        saved = localStorage.getItem('spectra-state');
+      } catch (e) {
+        console.warn('[loadState] localStorage read failed:', e);
+      }
+
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          // Only merge whitelisted keys
           for (const key of Object.keys(parsed)) {
             if (STATE_KEYS.has(key)) state[key] = parsed[key];
           }
@@ -11579,40 +11701,70 @@ Ignoring conversation history will cause you to LOSE the evaluation.`;
           console.error('[loadState] Failed to parse saved state:', e);
         }
       }
-      // Decrypt API key asynchronously (UI will update when ready)
-      const encKey = localStorage.getItem('spectra-apikey');
-      if (encKey) {
-        // Prefer the separate encrypted store
-        const genAtLoad = _apiKeyGeneration;
-        decryptApiKey(encKey).then(plain => {
-          if (_apiKeyGeneration !== genAtLoad) return;
-          state.apiKey = plain;
+
+      // Ensure active conversation ID is valid
+      if (Array.isArray(state.conversations) && state.conversations.length > 0) {
+        if (!state.currentId || !state.conversations.some(c => c.id === state.currentId)) {
+          state.currentId = state.conversations[0].id;
+        }
+      }
+
+      // Restore from IndexedDB asynchronously if localStorage was cleared or empty
+      idbGet('spectra-state').then(idbSaved => {
+        if (idbSaved && typeof idbSaved === 'object') {
+          let updated = false;
+          if ((!state.conversations || state.conversations.length === 0) && Array.isArray(idbSaved.conversations) && idbSaved.conversations.length > 0) {
+            state.conversations = idbSaved.conversations;
+            if (!state.currentId) state.currentId = state.conversations[0]?.id || null;
+            updated = true;
+          }
+          for (const key of Object.keys(idbSaved)) {
+            if (STATE_KEYS.has(key) && (state[key] === undefined || state[key] === null || state[key] === '')) {
+              state[key] = idbSaved[key];
+              updated = true;
+            }
+          }
+          if (updated) {
+            render();
+            updateApiWarning();
+            updateModeSwitcherUI();
+          }
+        }
+      }).catch(() => {});
+
+      // Decrypt API keys with in-flight race condition protection
+      let encKey = null;
+      let encLocalKey = null;
+      try {
+        encKey = localStorage.getItem('spectra-apikey');
+        encLocalKey = localStorage.getItem('spectra-local-apikey');
+      } catch (_) {}
+
+      const genAtLoad = _apiKeyGeneration;
+      const localGenAtLoad = _localApiKeyGeneration;
+
+      _keyDecryptPromise = Promise.all([
+        encKey ? decryptApiKey(encKey) : (state.apiKey ? Promise.resolve(state.apiKey) : idbGet('spectra-apikey').then(k => k ? decryptApiKey(k) : '')),
+        encLocalKey ? decryptApiKey(encLocalKey) : (state.localApiKey ? Promise.resolve(state.localApiKey) : idbGet('spectra-local-apikey').then(k => k ? decryptApiKey(k) : ''))
+      ]).then(([plainApiKey, plainLocalKey]) => {
+        _keyDecryptedOnce = true;
+        if (_apiKeyGeneration === genAtLoad && plainApiKey) {
+          state.apiKey = plainApiKey;
           updateApiWarning();
           buildTierSelect();
-        });
-      } else if (state.apiKey) {
-        // Migrate: old plaintext key found in state blob → encrypt it
-        encryptApiKey(state.apiKey).then(enc => {
-          localStorage.setItem('spectra-apikey', enc);
-        });
-      }
-      // Keep an optional local-gateway credential out of the main state blob too.
-      const encLocalKey = localStorage.getItem('spectra-local-apikey');
-      if (encLocalKey) {
-        const genAtLoad = _localApiKeyGeneration;
-        decryptApiKey(encLocalKey).then(plain => {
-          if (_localApiKeyGeneration !== genAtLoad) return;
-          state.localApiKey = plain;
-        });
-      } else if (state.localApiKey) {
-        // Migrate a PR-preview plaintext local key into the separate store.
-        const legacyLocalKey = state.localApiKey;
-        encryptApiKey(legacyLocalKey).then(enc => {
-          if (state.localApiKey !== legacyLocalKey) return;
-          localStorage.setItem('spectra-local-apikey', enc);
-          saveState();
-        });
-      }
+          const apiInput = document.getElementById('apiKeyInput');
+          if (apiInput && !apiInput.value) apiInput.value = plainApiKey;
+        }
+        if (_localApiKeyGeneration === localGenAtLoad && plainLocalKey) {
+          state.localApiKey = plainLocalKey;
+          const localInput = document.getElementById('localApiKeyInput');
+          if (localInput && !localInput.value) localInput.value = plainLocalKey;
+        }
+      }).catch(err => {
+        _keyDecryptedOnce = true;
+        console.warn('[loadState] Decryption notice:', err);
+      });
+
       // Sanitize loaded state — same rules as import
       sanitizeLoadedState();
       _log('[DEBUG] loadState: final state.ultraplinian =', state.ultraplinian);
@@ -11856,41 +12008,22 @@ Ignoring conversation history will cause you to LOSE the evaluation.`;
       _saveStateTimer = null;
       _saveStatePending = false;
       enforceDataCaps(); // Cap unbounded arrays before serialization
-      // Strip credentials from the main blob — they are stored separately.
+
+      // Strip credentials from the main blob — stored in separate secure keys
       const { apiKey, localApiKey, ...stateWithoutKeys } = state;
       const payload = JSON.stringify(stateWithoutKeys);
 
-      // Persist encrypted key separately (async, best-effort)
-      if (apiKey) {
-        const keyAtFlush = apiKey;
-        encryptApiKey(keyAtFlush).then(enc => {
-          if (state.apiKey === keyAtFlush) {
-            try { localStorage.setItem('spectra-apikey', enc); } catch (_) {}
-          }
-        });
-      } else {
-        localStorage.removeItem('spectra-apikey');
-      }
-
-      if (localApiKey) {
-        const keyAtFlush = localApiKey;
-        encryptApiKey(keyAtFlush).then(enc => {
-          if (state.localApiKey === keyAtFlush) {
-            try { localStorage.setItem('spectra-local-apikey', enc); } catch (_) {}
-          }
-        });
-      } else {
-        localStorage.removeItem('spectra-local-apikey');
-      }
-
+      // 1. Primary write to localStorage (synchronous)
       try {
         localStorage.setItem('spectra-state', payload);
       } catch (e) {
-        if (e.name === 'QuotaExceededError' || e.message.includes('quota')) {
+        if (e.name === 'QuotaExceededError' || (e.message && e.message.includes('quota'))) {
           console.warn('Storage quota exceeded, attempting to free space...');
           if (trimOldData()) {
             try {
-              localStorage.setItem('spectra-state', payload);
+              const { apiKey: _a, localApiKey: _l, ...trimmedState } = state;
+              const newPayload = JSON.stringify(trimmedState);
+              localStorage.setItem('spectra-state', newPayload);
               showStorageWarning('Storage was full. Older conversations were removed to make space.');
             } catch (e2) {
               showStorageWarning('Storage is completely full! Please clear some data in Settings > Data.');
@@ -11902,32 +12035,64 @@ Ignoring conversation history will cause you to LOSE the evaluation.`;
           console.error('Failed to save state:', e);
         }
       }
+
+      // 2. Secondary write to IndexedDB (asynchronous, vast quota)
+      idbSet('spectra-state', stateWithoutKeys).catch(() => {});
+
+      // 3. Persist encrypted OpenRouter API key
+      if (apiKey) {
+        const keyAtFlush = apiKey;
+        encryptApiKey(keyAtFlush).then(enc => {
+          if (state.apiKey === keyAtFlush) {
+            try { localStorage.setItem('spectra-apikey', enc); } catch (_) {}
+            idbSet('spectra-apikey', enc).catch(() => {});
+          }
+        });
+      } else if (_keyDecryptedOnce) {
+        try { localStorage.removeItem('spectra-apikey'); } catch (_) {}
+        idbDel('spectra-apikey').catch(() => {});
+      }
+
+      // 4. Persist encrypted Local Gateway key
+      if (localApiKey) {
+        const keyAtFlush = localApiKey;
+        encryptApiKey(keyAtFlush).then(enc => {
+          if (state.localApiKey === keyAtFlush) {
+            try { localStorage.setItem('spectra-local-apikey', enc); } catch (_) {}
+            idbSet('spectra-local-apikey', enc).catch(() => {});
+          }
+        });
+      } else if (_keyDecryptedOnce) {
+        try { localStorage.removeItem('spectra-local-apikey'); } catch (_) {}
+        idbDel('spectra-local-apikey').catch(() => {});
+      }
     }
 
     function saveState() {
-      state.model = document.getElementById('modelSelect').value;
+      const modelEl = document.getElementById('modelSelect');
+      if (modelEl) state.model = modelEl.value;
 
-      // Also update current conversation's model/persona if mid-conversation
+      // Update current conversation's model/persona mid-session
       const conv = getCurrentConv();
       if (conv) {
         conv.model = state.model;
         conv.persona = state.persona;
       }
 
-      // Debounce: coalesce rapid writes (50ms). The state object is shared
-      // in-memory so the final write always contains the latest mutations.
+      // Debounce: coalesce rapid writes (50ms)
       if (_saveStateTimer) clearTimeout(_saveStateTimer);
       _saveStatePending = true;
       _saveStateTimer = setTimeout(_flushSaveState, 50);
     }
 
-    // Force an immediate synchronous write (for beforeunload / critical paths)
+    // Force an immediate synchronous write (for lifecycle hooks & settings modal close)
     function saveStateNow() {
       if (_saveStateTimer) {
         clearTimeout(_saveStateTimer);
         _saveStateTimer = null;
       }
-      state.model = document.getElementById('modelSelect').value;
+      const modelEl = document.getElementById('modelSelect');
+      if (modelEl) state.model = modelEl.value;
       const conv = getCurrentConv();
       if (conv) {
         conv.model = state.model;
@@ -11936,6 +12101,23 @@ Ignoring conversation history will cause you to LOSE the evaluation.`;
       _saveStatePending = false;
       _flushSaveState();
     }
+
+    // Cross-tab synchronization: keep open tabs aligned
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'spectra-state' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          for (const key of Object.keys(parsed)) {
+            if (STATE_KEYS.has(key) && key !== 'conversations') {
+              state[key] = parsed[key];
+            }
+          }
+          if (typeof updateModeSwitcherUI === 'function') updateModeSwitcherUI();
+          if (typeof updateHeaderLiquidUI === 'function') updateHeaderLiquidUI();
+          if (typeof updateApiWarning === 'function') updateApiWarning();
+        } catch (_) {}
+      }
+    });
 
     // Hard caps to prevent unbounded growth
     const MAX_CONVERSATIONS = 100;
@@ -15787,6 +15969,7 @@ function escapeHtml(text) {
     }
 
     function closeSettings() {
+      try { saveSettings(); } catch (_) {}
       document.getElementById('settingsModal').classList.remove('open');
       // Reset to first tab
       switchSettingsTab('general');
@@ -15881,7 +16064,7 @@ function escapeHtml(text) {
       _log('[DEBUG] saveSettings: plinyMode =', state.plinyMode);
       _log('[DEBUG] saveSettings: autoTuneEnabled =', state.autoTuneEnabled);
       document.getElementById('modelSelect').value = state.model;
-      saveState();
+      saveStateNow();
       updateApiWarning();
       updateUltraplinianUI();
       buildTierSelect();
@@ -16440,14 +16623,18 @@ function escapeHtml(text) {
     // ═══════════════════════════════════════════════════════════════════
 
     function checkDisclaimer() {
-      const accepted = localStorage.getItem('spectra-tos-accepted');
+      let accepted = null;
+      try { accepted = localStorage.getItem('spectra-tos-accepted'); } catch (_) {}
+      if (!accepted) accepted = getCookie('spectra-tos-accepted');
       if (!accepted) {
         document.getElementById('disclaimerModal').classList.add('open');
       }
     }
 
     function acceptDisclaimer() {
-      localStorage.setItem('spectra-tos-accepted', Date.now().toString());
+      const ts = Date.now().toString();
+      try { localStorage.setItem('spectra-tos-accepted', ts); } catch (_) {}
+      setCookie('spectra-tos-accepted', ts, 365);
       document.getElementById('disclaimerModal').classList.remove('open');
     }
 
@@ -16458,9 +16645,15 @@ function escapeHtml(text) {
     // Show disclaimer on load (after a brief delay so the page renders first)
     setTimeout(checkDisclaimer, 300);
 
-    // Close modal on overlay click
+    // Close modal on overlay click or Escape key
     document.getElementById('settingsModal').addEventListener('click', (e) => {
       if (e.target.id === 'settingsModal') closeSettings();
+    });
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const modal = document.getElementById('settingsModal');
+        if (modal && modal.classList.contains('open')) closeSettings();
+      }
     });
 
     document.getElementById('logsModal').addEventListener('click', (e) => {
